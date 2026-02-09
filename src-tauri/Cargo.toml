@@ -1,0 +1,26 @@
+[package]
+name = "intento"
+version = "0.1.0"
+description = "智能 Todo 桌面应用"
+authors = ["you"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+rusqlite = { version = "0.38", features = ["bundled", "serde_json", "chrono"] }
+chrono = { version = "0.4", features = ["serde"] }
+anyhow = "1.0"
+thiserror = "2.0"
+
+# ADK-Rust AI 客户端（后续添加）
+# adk-core = "0.3"
+# adk-agent = "0.3"
+# adk-model = { version = "0.3", features = ["openai", "anthropic"] }
+# tokio-cron-scheduler = "0.15"

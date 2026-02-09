@@ -1,0 +1,73 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Tauri build outputs
+src-tauri/target/
+src-tauri/WixTools/
+
+# Tauri auto-generated files
+src-tauri/gen/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# OS files
+Thumbs.db
+Desktop.ini
+
+# Rust
+**/*.rs.bk
+Cargo.lock
+
+# Build artifacts
+build/
+out/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# IDEs
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+.idea/
+*.iml
+
+# macOS
+.AppleDouble
+.LSOverride
+._*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
