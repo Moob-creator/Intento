@@ -7,7 +7,12 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "build:all": "npm run build && npm run tauri:build",
+    "build:mac": "npm run build && tauri build --target universal-apple-darwin",
+    "build:win": "npm run build && tauri build --target x86_64-pc-windows-msvc"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",
