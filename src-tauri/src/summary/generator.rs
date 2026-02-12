@@ -66,8 +66,20 @@ impl SummaryGenerator {
         period_start: i64,
         period_end: i64,
     ) -> Result<Summary> {
-        // TODO: Check if summary exists in database
-        // For now, just generate new one
+        // Check if summary already exists in database
+        let existing = self.db.find_summary_by_period(
+            &summary_type,
+            period_start,
+            period_end,
+            tag.as_deref(),
+        )?;
+
+        if let Some(summary) = existing {
+            // Return cached summary
+            return Ok(summary);
+        }
+
+        // Generate new summary if not found
         self.generate_summary(tag, summary_type, period_start, period_end).await
     }
 

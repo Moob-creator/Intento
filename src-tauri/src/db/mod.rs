@@ -414,6 +414,60 @@ impl Database {
         Ok(summary)
     }
 
+    /// Find existing summary by period and tag
+    /// Returns the most recent summary matching the criteria
+    pub fn find_summary_by_period(
+        &self,
+        summary_type: &SummaryType,
+        period_start: i64,
+        period_end: i64,
+        tag: Option<&str>,
+    ) -> Result<Option<Summary>> {
+        let conn = self.conn.lock().unwrap();
+
+        let summary = conn
+            .query_row(
+                "SELECT id, summary_type, period_start, period_end, tag, tag_filter,
+                 content, statistics, task_ids, created_at, is_deleted
+                 FROM summaries
+                 WHERE summary_type = ?1
+                 AND period_start = ?2
+                 AND period_end = ?3
+                 AND ((?4 IS NULL AND tag IS NULL) OR tag = ?4)
+                 AND is_deleted = 0
+                 ORDER BY created_at DESC
+                 LIMIT 1",
+                (summary_type.as_str(), period_start, period_end, tag),
+                |row| {
+                    let task_ids_json: Option<String> = row.get(8)?;
+                    let task_ids = task_ids_json.and_then(|s| serde_json::from_str(&s).ok());
+
+                    let tag_filter_json: Option<String> = row.get(5)?;
+                    let tag_filter = tag_filter_json.and_then(|s| serde_json::from_str(&s).ok());
+
+                    let summary_type_str: String = row.get(1)?;
+
+                    Ok(Summary {
+                        id: Some(row.get(0)?),
+                        summary_type: SummaryType::from_str(&summary_type_str).unwrap(),
+                        period_start: row.get(2)?,
+                        period_end: row.get(3)?,
+                        tag: row.get(4)?,
+                        tag_filter,
+                        content: row.get(6)?,
+                        statistics: row.get(7)?,
+                        task_ids,
+                        created_at: row.get(9)?,
+                        is_deleted: row.get::<_, i32>(10)? != 0,
+                    })
+                },
+            )
+            .optional()
+            .context("Failed to query summary by period")?;
+
+        Ok(summary)
+    }
+
     // ========================================
     // Context cache operations
     // ========================================
