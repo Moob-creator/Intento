@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Calendar, CheckCircle, Circle, TrendingUp, Target, Hash } from 'lucide-react';
-import type { Summary, SummaryStatistics } from '../types/summary';
+import type { Summary } from '../types/summary';
 import { parseSummaryStatistics, formatPeriodRange, formatRelativeTime, formatSummaryType } from '../types/summary';
 
 interface SummaryContentProps {

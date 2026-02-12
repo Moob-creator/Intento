@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronRight, ChevronDown, Hash, Inbox } from 'lucide-react';
+import { ChevronDown, Hash, Inbox, Package } from 'lucide-react';
 import type { Task } from '../types/task';
 import { ContextMenu } from './ContextMenu';
 
@@ -42,7 +42,10 @@ export function Sidebar({ tasks, selectedTag, onTagSelect, isCollapsed, onToggle
     <aside className="w-64 flex-shrink-0 border-r border-neutral-light/60 bg-background-card flex flex-col">
       {/* Header */}
       <div className="h-14 flex items-center justify-between px-4 border-b border-neutral-light/60">
-        <h2 className="text-sm font-semibold text-neutral-dark">Tags</h2>
+        <div className="flex items-center gap-2">
+          <Package size={20} className="text-primary flex-shrink-0" />
+          <h1 className="text-base font-bold text-neutral-dark">Intento</h1>
+        </div>
         <button
           onClick={onToggleCollapse}
           className="p-1.5 text-neutral-dark/40 hover:text-neutral-dark hover:bg-neutral-light/40 rounded-lg transition-all duration-200"
