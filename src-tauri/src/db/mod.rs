@@ -75,6 +75,14 @@ impl Database {
             println!("✓ Applied migration v2: Add tag support to summaries");
         }
 
+        // Migration v3: Fix summary types CHECK constraint
+        if version < 3 {
+            let migration_v3 = include_str!("../../migrations/v3_fix_summary_types.sql");
+            conn.execute_batch(migration_v3)
+                .context("Failed to execute v3 migration")?;
+            println!("✓ Applied migration v3: Fix summary types to support weekly and semi_annual");
+        }
+
         Ok(())
     }
 
@@ -524,7 +532,7 @@ mod tests {
 
         let db = Database::new(db_path.clone()).unwrap();
         let version = db.get_version().unwrap();
-        assert_eq!(version, 1);
+        assert_eq!(version, 3);
 
         // Clean up
         std::fs::remove_file(db_path).ok();

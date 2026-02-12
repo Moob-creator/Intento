@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FileText, X, Download, RefreshCw, Loader2 } from 'lucide-react';
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 import type { Summary, SummaryType } from '../types/summary';
 import { TimeRangeSelector } from './TimeRangeSelector';
 import { SummaryContent } from './SummaryContent';
