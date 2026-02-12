@@ -204,9 +204,18 @@ export function TaskOperationsConfirmDialog({
                         {operation.data.priority && (
                           <p>优先级: {operation.data.priority}</p>
                         )}
-                        {operation.data.deadline && (
-                          <p>截止: {new Date(operation.data.deadline).toLocaleString('zh-CN')}</p>
-                        )}
+                        {operation.data.deadline && (() => {
+                          const deadlineDate = new Date(operation.data.deadline);
+                          const formattedDate = deadlineDate.toLocaleDateString('zh-CN', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit'
+                          });
+                          const hours = deadlineDate.getHours().toString().padStart(2, '0');
+                          const minutes = deadlineDate.getMinutes().toString().padStart(2, '0');
+                          const formattedTime = `${hours}:${minutes}`;
+                          return <p>截止: {formattedDate} {formattedTime}</p>;
+                        })()}
                         {operation.data.tags && operation.data.tags.length > 0 && (
                           <p>标签: {operation.data.tags.join(', ')}</p>
                         )}
