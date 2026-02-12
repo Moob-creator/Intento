@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Trash2, Calendar, X, Hash, Circle, Loader2, CheckCircle2 } from 'lucide-react';
 import { DateTimePicker } from './DateTimePicker';
 import { CustomSelect, type SelectOption } from './CustomSelect';
+import { useTaskStore } from '../store/taskStore';
 import type { Task, TaskStatus, TaskPriority } from '../types/task';
 
 interface TaskDetailPanelProps {
@@ -12,6 +13,7 @@ interface TaskDetailPanelProps {
 }
 
 export function TaskDetailPanel({ task, onSave, onDelete, onCancel }: TaskDetailPanelProps) {
+  const { tasks } = useTaskStore(); // Get all tasks to extract existing tags
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<TaskStatus>('todo');
@@ -20,10 +22,23 @@ export function TaskDetailPanel({ task, onSave, onDelete, onCancel }: TaskDetail
   const [deadlineTime, setDeadlineTime] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const [showDateTimePicker, setShowDateTimePicker] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const dateTimePickerRef = useRef<HTMLDivElement>(null);
+  const tagInputRef = useRef<HTMLInputElement>(null);
+  const tagSuggestionsRef = useRef<HTMLDivElement>(null);
+
+  // Extract all existing tags from tasks
+  const existingTags = Array.from(
+    new Set(tasks.flatMap(t => t.tags || []))
+  ).sort();
+
+  // Filter suggestions based on input
+  const filteredSuggestions = existingTags.filter(tag =>
+    !tags.includes(tag) && tag.toLowerCase().includes(tagInput.toLowerCase())
+  );
 
   // Status options with icons
   const statusOptions: SelectOption[] = [
@@ -107,6 +122,25 @@ export function TaskDetailPanel({ task, onSave, onDelete, onCancel }: TaskDetail
     }
   }, [showDateTimePicker]);
 
+  // Close tag suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        tagSuggestionsRef.current &&
+        !tagSuggestionsRef.current.contains(event.target as Node) &&
+        tagInputRef.current &&
+        !tagInputRef.current.contains(event.target as Node)
+      ) {
+        setShowTagSuggestions(false);
+      }
+    };
+
+    if (showTagSuggestions) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showTagSuggestions]);
+
   const handleSave = async () => {
     if (!title.trim()) {
       alert('Please enter a task title');
@@ -166,7 +200,7 @@ export function TaskDetailPanel({ task, onSave, onDelete, onCancel }: TaskDetail
       <div className="p-6 flex-1 flex flex-col gap-6 overflow-y-auto">
         {/* Title */}
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="task-title" className="text-sm font-medium text-neutral-dark/60">
+          <label htmlFor="task-title" className="text-sm font-medium text-neutral-dark/60 select-none">
             Title
           </label>
           <input
@@ -178,13 +212,13 @@ export function TaskDetailPanel({ task, onSave, onDelete, onCancel }: TaskDetail
             className="w-full px-1 py-2 text-lg font-semibold
                      text-neutral-dark placeholder:text-neutral-dark/40
                      border-none focus:outline-none bg-transparent
-                     transition-all duration-200"
+                     transition-all duration-200 select-text"
           />
         </div>
 
         {/* Description */}
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="task-desc" className="text-sm font-medium text-neutral-dark/60">
+          <label htmlFor="task-desc" className="text-sm font-medium text-neutral-dark/60 select-none">
             Description
           </label>
           <textarea
@@ -196,7 +230,7 @@ export function TaskDetailPanel({ task, onSave, onDelete, onCancel }: TaskDetail
             className="w-full px-1 py-2
                      text-neutral-dark placeholder:text-neutral-dark/40
                      border-none focus:outline-none bg-transparent
-                     transition-all duration-200 resize-none"
+                     transition-all duration-200 resize-none select-text"
           />
         </div>
 
@@ -277,49 +311,83 @@ export function TaskDetailPanel({ task, onSave, onDelete, onCancel }: TaskDetail
 
         {/* Tags */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-neutral-dark/60">
+          <label className="text-sm font-medium text-neutral-dark/60 select-none">
             Tags
           </label>
-          <div className="w-full py-2 min-h-[44px]">
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag, index) => (
-                <span
-                  key={index}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary rounded-lg text-xs font-medium"
-                >
-                  <Hash size={12} />
-                  {tag}
-                  <button
-                    type="button"
-                    onClick={() => setTags(tags.filter((_, i) => i !== index))}
-                    className="hover:text-red-500 transition-colors"
+          <div className="relative">
+            <div className="w-full py-2 min-h-[44px]">
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag, index) => (
+                  <span
+                    key={index}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary rounded-lg text-xs font-medium select-text"
                   >
-                    <X size={12} />
-                  </button>
-                </span>
-              ))}
-              <input
-                type="text"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && tagInput.trim()) {
-                    e.preventDefault();
-                    const newTag = tagInput.trim();
-                    if (!tags.includes(newTag)) {
-                      setTags([...tags, newTag]);
+                    <Hash size={12} />
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => setTags(tags.filter((_, i) => i !== index))}
+                      className="hover:text-red-500 transition-colors select-none"
+                    >
+                      <X size={12} />
+                    </button>
+                  </span>
+                ))}
+                <input
+                  ref={tagInputRef}
+                  type="text"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onFocus={() => setShowTagSuggestions(true)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && tagInput.trim()) {
+                      e.preventDefault();
+                      const newTag = tagInput.trim();
+                      if (!tags.includes(newTag)) {
+                        setTags([...tags, newTag]);
+                      }
+                      setTagInput('');
+                      setShowTagSuggestions(false);
+                    } else if (e.key === 'Backspace' && !tagInput && tags.length > 0) {
+                      setTags(tags.slice(0, -1));
+                    } else if (e.key === 'Escape') {
+                      setShowTagSuggestions(false);
                     }
-                    setTagInput('');
-                  } else if (e.key === 'Backspace' && !tagInput && tags.length > 0) {
-                    setTags(tags.slice(0, -1));
-                  }
-                }}
-                placeholder={tags.length === 0 ? 'Add tags...' : ''}
-                className="flex-1 min-w-[120px] bg-transparent outline-none text-sm text-neutral-dark placeholder:text-neutral-dark/40"
-              />
+                  }}
+                  placeholder={tags.length === 0 ? 'Add tags...' : ''}
+                  className="flex-1 min-w-[120px] bg-transparent outline-none text-sm text-neutral-dark placeholder:text-neutral-dark/40 select-text"
+                />
+              </div>
             </div>
+
+            {/* Tag suggestions dropdown */}
+            {showTagSuggestions && filteredSuggestions.length > 0 && (
+              <div
+                ref={tagSuggestionsRef}
+                className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-neutral-light/60 max-h-48 overflow-y-auto z-10"
+              >
+                {filteredSuggestions.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => {
+                      if (!tags.includes(tag)) {
+                        setTags([...tags, tag]);
+                      }
+                      setTagInput('');
+                      setShowTagSuggestions(false);
+                      tagInputRef.current?.focus();
+                    }}
+                    className="w-full px-3 py-2 text-left text-sm text-neutral-dark hover:bg-primary/10 transition-colors flex items-center gap-2"
+                  >
+                    <Hash size={14} className="text-primary" />
+                    <span className="select-text">{tag}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-          <p className="text-xs text-neutral-dark/40">
+          <p className="text-xs text-neutral-dark/40 select-none">
             Press Enter to add a tag, Backspace to remove
           </p>
         </div>

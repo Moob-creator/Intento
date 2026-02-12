@@ -1,4 +1,6 @@
-import { Search, Sparkles, Settings, PanelLeftClose, PanelLeft, FileText } from 'lucide-react';
+import { Search, Sparkles, Settings, PanelLeftClose, PanelLeft, FileText, List, Calendar } from 'lucide-react';
+
+type ViewMode = 'list' | 'calendar';
 
 interface TopBarProps {
   onSearchClick: () => void;
@@ -7,9 +9,20 @@ interface TopBarProps {
   onSidebarToggle: () => void;
   onSummaryClick?: () => void;  // ✨ Phase 5
   sidebarCollapsed: boolean;
+  viewMode?: ViewMode;
+  onViewModeChange?: (mode: ViewMode) => void;
 }
 
-export function TopBar({ onSearchClick, onAIClick, onSettingsClick, onSidebarToggle, onSummaryClick, sidebarCollapsed }: TopBarProps) {
+export function TopBar({
+  onSearchClick,
+  onAIClick,
+  onSettingsClick,
+  onSidebarToggle,
+  onSummaryClick,
+  sidebarCollapsed,
+  viewMode = 'list',
+  onViewModeChange,
+}: TopBarProps) {
   return (
     <header
       data-tauri-drag-region
@@ -52,6 +65,36 @@ export function TopBar({ onSearchClick, onAIClick, onSettingsClick, onSidebarTog
         className="flex items-center gap-2"
         style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
       >
+        {/* View mode toggle */}
+        {onViewModeChange && (
+          <div className="flex items-center gap-1 bg-neutral-light/30 rounded-lg p-1">
+            <button
+              onClick={() => onViewModeChange('list')}
+              className={`p-2 rounded-md transition-all duration-200 ${
+                viewMode === 'list'
+                  ? 'bg-white text-neutral-dark shadow-sm'
+                  : 'text-neutral-dark/40 hover:text-neutral-dark/60'
+              }`}
+              aria-label="List view"
+              title="List view"
+            >
+              <List size={18} />
+            </button>
+            <button
+              onClick={() => onViewModeChange('calendar')}
+              className={`p-2 rounded-md transition-all duration-200 ${
+                viewMode === 'calendar'
+                  ? 'bg-white text-neutral-dark shadow-sm'
+                  : 'text-neutral-dark/40 hover:text-neutral-dark/60'
+              }`}
+              aria-label="Calendar view"
+              title="Calendar view"
+            >
+              <Calendar size={18} />
+            </button>
+          </div>
+        )}
+
         {/* ✨ Phase 5: Summary button */}
         {onSummaryClick && (
           <button

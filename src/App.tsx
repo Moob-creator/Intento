@@ -4,6 +4,7 @@ import { useTaskStore } from './store/taskStore';
 import { TopBar } from './components/TopBar';
 import { Sidebar } from './components/Sidebar';
 import { TaskList } from './components/TaskList';
+import { CalendarView } from './components/CalendarView';
 import { TaskDetailPanel } from './components/TaskDetailPanel';
 import { TaskConfirmDialog } from './components/TaskConfirmDialog';
 import { TaskOperationsConfirmDialog } from './components/TaskOperationsConfirmDialog';
@@ -15,6 +16,8 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { invoke } from '@tauri-apps/api/core';
 import type { Task, TaskStatus, ParsedTask, ImageParseResult, TaskOperation } from './types/task';
 import './App.css';
+
+type ViewMode = 'list' | 'calendar';
 
 function App() {
   const {
@@ -37,9 +40,13 @@ function App() {
   const [summaryPanelOpen, setSummaryPanelOpen] = useState(false);  // ✨ Phase 5
   const [initialViewMode, setInitialViewMode] = useState<'current' | 'history'>('current');  // ✨ Phase 5.4
 
+  // View mode state
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+
   // Filter state
   const [statusFilter, setStatusFilter] = useState<'all' | TaskStatus>('all');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [timeFilter, setTimeFilter] = useState<'today' | 'due-soon' | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // AI text input state
@@ -555,6 +562,30 @@ function App() {
     // Apply filters
     let filtered = tasks;
 
+    // Filter by time
+    if (timeFilter) {
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() / 1000;
+      const endOfToday = startOfToday + 86400; // 24 * 60 * 60
+
+      if (timeFilter === 'today') {
+        filtered = filtered.filter(task =>
+          task.status !== 'done' &&
+          task.deadline != null &&
+          task.deadline >= startOfToday &&
+          task.deadline < endOfToday
+        );
+      } else if (timeFilter === 'due-soon') {
+        const endOfThreeDays = startOfToday + 86400 * 3;
+        filtered = filtered.filter(task =>
+          task.status !== 'done' &&
+          task.deadline != null &&
+          task.deadline >= startOfToday &&
+          task.deadline < endOfThreeDays
+        );
+      }
+    }
+
     // Filter by status
     if (statusFilter !== 'all') {
       filtered = filtered.filter(task => task.status === statusFilter);
@@ -566,6 +597,13 @@ function App() {
     }
 
     return [...filtered].sort((a, b) => {
+      // When time filter is active, sort by deadline first
+      if (timeFilter) {
+        const aDeadline = a.deadline ?? Infinity;
+        const bDeadline = b.deadline ?? Infinity;
+        if (aDeadline !== bDeadline) return aDeadline - bDeadline;
+      }
+
       // Priority order: high > medium > low
       const priorityOrder = { high: 0, medium: 1, low: 2 };
       if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
@@ -581,7 +619,7 @@ function App() {
       // Creation date: newest first
       return b.created_at - a.created_at;
     });
-  }, [tasks, statusFilter, selectedTag]);
+  }, [tasks, statusFilter, selectedTag, timeFilter]);
 
   return (
     <div className="relative flex flex-col h-screen w-full bg-background overflow-hidden">
@@ -593,6 +631,8 @@ function App() {
         onSummaryClick={() => setSummaryPanelOpen(true)}  // ✨ Phase 5
         onSidebarToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
         sidebarCollapsed={sidebarCollapsed}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
       {/* Main content */}
@@ -601,7 +641,7 @@ function App() {
         <Sidebar
           tasks={tasks}
           selectedTag={selectedTag}
-          onTagSelect={setSelectedTag}
+          onTagSelect={(tag) => { setSelectedTag(tag); setTimeFilter(null); }}
           isCollapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
           onGenerateSummary={handleGenerateSummary}
@@ -622,85 +662,99 @@ function App() {
             </div>
           )}
 
-          {/* Quick actions bar */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-neutral-dark">
-                {selectedTag ? (
-                  <span className="flex items-center gap-2">
-                    <span className="text-primary">#</span>
-                    {selectedTag}
-                  </span>
-                ) : (
-                  <>
-                    {statusFilter === 'all' && 'All Tasks'}
-                    {statusFilter === 'todo' && 'To Do'}
-                    {statusFilter === 'doing' && 'Doing'}
-                    {statusFilter === 'done' && 'Done'}
-                  </>
-                )}
-              </h2>
-              <p className="text-sm text-neutral-dark/60 mt-1">
-                {sortedTasks.length} {sortedTasks.length === 1 ? 'task' : 'tasks'}
-                {selectedTag && ` • ${selectedTag}`}
-              </p>
-            </div>
+          {/* Quick actions bar - Only show in list view */}
+          {viewMode === 'list' && (
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-neutral-dark">
+                  {selectedTag ? (
+                    <span className="flex items-center gap-2">
+                      <span className="text-primary">#</span>
+                      {selectedTag}
+                    </span>
+                  ) : timeFilter === 'today' ? (
+                    "Today's Tasks"
+                  ) : timeFilter === 'due-soon' ? (
+                    'Due Soon'
+                  ) : (
+                    <>
+                      {statusFilter === 'all' && 'All Tasks'}
+                      {statusFilter === 'todo' && 'To Do'}
+                      {statusFilter === 'doing' && 'Doing'}
+                      {statusFilter === 'done' && 'Done'}
+                    </>
+                  )}
+                </h2>
+                <p className="text-sm text-neutral-dark/60 mt-1">
+                  {sortedTasks.length} {sortedTasks.length === 1 ? 'task' : 'tasks'}
+                  {selectedTag && ` • ${selectedTag}`}
+                </p>
+              </div>
 
-            {/* Quick filter buttons */}
-            <div className="flex gap-2">
-              <button
-                onClick={() => setStatusFilter('all')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  statusFilter === 'all'
-                    ? 'bg-neutral-dark text-white shadow-md'
-                    : 'bg-neutral-light/40 text-neutral-dark/70 hover:bg-neutral-light/60'
-                }`}
-              >
-                All
-              </button>
-              <button
-                onClick={() => setStatusFilter('todo')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  statusFilter === 'todo'
-                    ? 'bg-blue-500 text-white shadow-md'
-                    : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
-                }`}
-              >
-                To Do
-              </button>
-              <button
-                onClick={() => setStatusFilter('doing')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  statusFilter === 'doing'
-                    ? 'bg-amber-500 text-white shadow-md'
-                    : 'bg-amber-50 text-amber-600 hover:bg-amber-100'
-                }`}
-              >
-                Doing
-              </button>
-              <button
-                onClick={() => setStatusFilter('done')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  statusFilter === 'done'
-                    ? 'bg-emerald-500 text-white shadow-md'
-                    : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
-                }`}
-              >
-                Done
-              </button>
+              {/* Quick filter buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setStatusFilter('all')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    statusFilter === 'all'
+                      ? 'bg-neutral-dark text-white shadow-md'
+                      : 'bg-neutral-light/40 text-neutral-dark/70 hover:bg-neutral-light/60'
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setStatusFilter('todo')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    statusFilter === 'todo'
+                      ? 'bg-blue-500 text-white shadow-md'
+                      : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                  }`}
+                >
+                  To Do
+                </button>
+                <button
+                  onClick={() => setStatusFilter('doing')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    statusFilter === 'doing'
+                      ? 'bg-amber-500 text-white shadow-md'
+                      : 'bg-amber-50 text-amber-600 hover:bg-amber-100'
+                  }`}
+                >
+                  Doing
+                </button>
+                <button
+                  onClick={() => setStatusFilter('done')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    statusFilter === 'done'
+                      ? 'bg-emerald-500 text-white shadow-md'
+                      : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                  }`}
+                >
+                  Done
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Task list */}
-          <TaskList
-            tasks={sortedTasks}
-            selectedTaskId={selectedTask?.id ?? null}
-            onTaskClick={selectTask}
-            onStatusChange={handleStatusChange}
-            onEdit={handleEditFromCard}
-            onDelete={handleDeleteTask}
-            isLoading={isLoading}
-          />
+          {/* Task view - List or Calendar */}
+          {viewMode === 'list' ? (
+            <TaskList
+              tasks={sortedTasks}
+              selectedTaskId={selectedTask?.id ?? null}
+              onTaskClick={selectTask}
+              onStatusChange={handleStatusChange}
+              onEdit={handleEditFromCard}
+              onDelete={handleDeleteTask}
+              isLoading={isLoading}
+            />
+          ) : (
+            <CalendarView
+              tasks={tasks}
+              onTaskClick={selectTask}
+              selectedTag={selectedTag}
+            />
+          )}
         </div>
 
         {/* Task detail panel - slide from right */}
@@ -874,6 +928,8 @@ function App() {
         onShowStats={() => setStatisticsPanelOpen(true)}
         onShowSettings={() => setSettingsPanelOpen(true)}
         onTestNotification={handleTestNotification}
+        onTodayTasks={() => { setTimeFilter('today'); setSelectedTag(null); setStatusFilter('all'); }}
+        onDueSoon={() => { setTimeFilter('due-soon'); setSelectedTag(null); setStatusFilter('all'); }}
         onTaskSelect={selectTask}
       />
 
