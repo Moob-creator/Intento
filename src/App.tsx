@@ -10,6 +10,7 @@ import { TaskOperationsConfirmDialog } from './components/TaskOperationsConfirmD
 import { CommandPalette } from './components/CommandPalette';
 import { StatisticsPanel } from './components/StatisticsPanel';
 import { SettingsPanel } from './components/SettingsPanel';
+import { SummaryPanel } from './components/SummaryPanel';  // ✨ Phase 5
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { invoke } from '@tauri-apps/api/core';
 import type { Task, TaskStatus, ParsedTask, ImageParseResult, TaskOperation } from './types/task';
@@ -33,6 +34,7 @@ function App() {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [statisticsPanelOpen, setStatisticsPanelOpen] = useState(false);
   const [settingsPanelOpen, setSettingsPanelOpen] = useState(false);
+  const [summaryPanelOpen, setSummaryPanelOpen] = useState(false);  // ✨ Phase 5
 
   // Filter state
   const [statusFilter, setStatusFilter] = useState<'all' | TaskStatus>('all');
@@ -81,6 +83,11 @@ function App() {
       key: ',',
       metaKey: true,
       handler: () => setSettingsPanelOpen(true),
+    },
+    {
+      key: 'r',
+      metaKey: true,
+      handler: () => setSummaryPanelOpen((prev) => !prev),  // ✨ Phase 5: ⌘R for Summary
     },
     {
       key: 'Escape',
@@ -139,6 +146,19 @@ function App() {
   // Handle edit from card
   const handleEditFromCard = (task: Task) => {
     selectTask(task);
+  };
+
+  // ✨ Phase 5: Handle generate summary from sidebar context menu
+  const handleGenerateSummary = (tag: string) => {
+    setSelectedTag(tag);
+    setSummaryPanelOpen(true);
+  };
+
+  // ✨ Phase 5: Handle view summary history from sidebar context menu
+  const handleViewSummaryHistory = (tag: string) => {
+    setSelectedTag(tag);
+    setSummaryPanelOpen(true);
+    // TODO: Add history view mode in Phase 5.2
   };
 
   // Handle deleting task
@@ -569,6 +589,7 @@ function App() {
         onSearchClick={() => setCommandPaletteOpen(true)}
         onAIClick={handleOpenTextInput}
         onSettingsClick={() => setSettingsPanelOpen(true)}
+        onSummaryClick={() => setSummaryPanelOpen(true)}  // ✨ Phase 5
         onSidebarToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
         sidebarCollapsed={sidebarCollapsed}
       />
@@ -582,6 +603,8 @@ function App() {
           onTagSelect={setSelectedTag}
           isCollapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onGenerateSummary={handleGenerateSummary}
+          onViewSummaryHistory={handleViewSummaryHistory}
         />
 
         {/* Task list section */}
@@ -862,6 +885,13 @@ function App() {
 
       {/* Settings Panel */}
       <SettingsPanel isOpen={settingsPanelOpen} onClose={() => setSettingsPanelOpen(false)} />
+
+      {/* ✨ Phase 5: Summary Panel */}
+      <SummaryPanel
+        isOpen={summaryPanelOpen}
+        onClose={() => setSummaryPanelOpen(false)}
+        selectedTag={selectedTag}
+      />
     </div>
   );
 }

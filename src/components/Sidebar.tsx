@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { ChevronRight, ChevronDown, Hash, Inbox } from 'lucide-react';
 import type { Task } from '../types/task';
+import { ContextMenu } from './ContextMenu';
 
 interface SidebarProps {
   tasks: Task[];
@@ -7,9 +9,13 @@ interface SidebarProps {
   onTagSelect: (tag: string | null) => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  onGenerateSummary?: (tag: string) => void;
+  onViewSummaryHistory?: (tag: string) => void;
 }
 
-export function Sidebar({ tasks, selectedTag, onTagSelect, isCollapsed, onToggleCollapse }: SidebarProps) {
+export function Sidebar({ tasks, selectedTag, onTagSelect, isCollapsed, onToggleCollapse, onGenerateSummary, onViewSummaryHistory }: SidebarProps) {
+  const [contextMenu, setContextMenu] = useState<{ tag: string; x: number; y: number } | null>(null);
+
   // Extract all unique tags from tasks
   const allTags = Array.from(
     new Set(
@@ -20,6 +26,12 @@ export function Sidebar({ tasks, selectedTag, onTagSelect, isCollapsed, onToggle
   // Count tasks per tag
   const getTagCount = (tag: string) => {
     return tasks.filter((task) => task.tags?.includes(tag)).length;
+  };
+
+  // Handle right-click on tag
+  const handleTagRightClick = (e: React.MouseEvent, tag: string) => {
+    e.preventDefault();
+    setContextMenu({ tag, x: e.clientX, y: e.clientY });
   };
 
   if (isCollapsed) {
@@ -68,6 +80,7 @@ export function Sidebar({ tasks, selectedTag, onTagSelect, isCollapsed, onToggle
               <button
                 key={tag}
                 onClick={() => onTagSelect(tag)}
+                onContextMenu={(e) => handleTagRightClick(e, tag)}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all duration-150 ${
                   selectedTag === tag
                     ? 'bg-primary/10 border-l-2 border-primary text-primary'
@@ -97,6 +110,26 @@ export function Sidebar({ tasks, selectedTag, onTagSelect, isCollapsed, onToggle
           </div>
         )}
       </div>
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          tag={contextMenu.tag}
+          onClose={() => setContextMenu(null)}
+          onGenerateSummary={() => {
+            if (onGenerateSummary) {
+              onGenerateSummary(contextMenu.tag);
+            }
+          }}
+          onViewHistory={() => {
+            if (onViewSummaryHistory) {
+              onViewSummaryHistory(contextMenu.tag);
+            }
+          }}
+        />
+      )}
     </aside>
   );
 }

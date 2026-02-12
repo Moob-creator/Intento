@@ -1,14 +1,15 @@
-import { Search, Sparkles, Settings, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { Search, Sparkles, Settings, PanelLeftClose, PanelLeft, FileText } from 'lucide-react';
 
 interface TopBarProps {
   onSearchClick: () => void;
   onAIClick: () => void;
   onSettingsClick: () => void;
   onSidebarToggle: () => void;
+  onSummaryClick?: () => void;  // ✨ Phase 5
   sidebarCollapsed: boolean;
 }
 
-export function TopBar({ onSearchClick, onAIClick, onSettingsClick, onSidebarToggle, sidebarCollapsed }: TopBarProps) {
+export function TopBar({ onSearchClick, onAIClick, onSettingsClick, onSidebarToggle, onSummaryClick, sidebarCollapsed }: TopBarProps) {
   return (
     <header
       data-tauri-drag-region
@@ -50,6 +51,17 @@ export function TopBar({ onSearchClick, onAIClick, onSettingsClick, onSidebarTog
         className="flex items-center gap-2"
         style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
       >
+        {/* ✨ Phase 5: Summary button */}
+        {onSummaryClick && (
+          <button
+            onClick={onSummaryClick}
+            className="p-2.5 text-purple-500 hover:bg-purple-50 rounded-lg transition-all duration-200 group"
+            aria-label="Summaries"
+            title="View Summaries (⌘R)"
+          >
+            <FileText size={20} className="group-hover:scale-110 transition-transform duration-200" />
+          </button>
+        )}
         <button
           onClick={onAIClick}
           className="p-2.5 text-amber-500 hover:bg-amber-50 rounded-lg transition-all duration-200 group"
