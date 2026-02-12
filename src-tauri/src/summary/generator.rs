@@ -110,16 +110,13 @@ impl SummaryGenerator {
     ) -> Result<String> {
         let prompt = self.build_summary_prompt(tasks, statistics, summary_type);
 
-        // Use parse_text_input as a workaround to get AI response
-        // TODO: Create a dedicated chat method for general AI interaction
+        // Use the new chat method for AI interaction
         let response = self.ai_client
-            .parse_text_input(&prompt)
+            .chat(&prompt)
             .await
             .map_err(|e| anyhow::anyhow!("AI generation failed: {}", e))?;
 
-        // For now, return a formatted summary using the parse result
-        // In Phase 5.2, we'll implement proper chat endpoint
-        Ok(format!("# 总结\n\n{}", response.title))
+        Ok(response)
     }
 
     /// Build prompt for AI summary generation

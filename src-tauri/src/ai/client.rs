@@ -423,6 +423,63 @@ impl AiClient {
         }
     }
 
+    /// ✨ Generic chat method for simple text-to-text AI interactions
+    ///
+    /// This is a general-purpose method that can be used for various AI tasks
+    /// like summarization, Q&A, content generation, etc.
+    ///
+    /// # Arguments
+    /// * `prompt` - The user's prompt or question
+    ///
+    /// # Returns
+    /// The AI's text response
+    ///
+    /// # Errors
+    /// Returns error if API call fails or response cannot be parsed
+    ///
+    /// # Example
+    /// ```
+    /// let client = AiClient::new_default()?;
+    /// let response = client.chat("Summarize this text: ...").await?;
+    /// ```
+    pub async fn chat(&self, prompt: &str) -> Result<String> {
+        let content = Content::new("user").with_text(prompt);
+        let request = LlmRequest {
+            model: String::new(),
+            contents: vec![content],
+            config: None,
+            tools: HashMap::new(),
+        };
+
+        let mut stream = self.model.generate_content(request, false).await?;
+
+        // Collect all response chunks
+        let mut full_response = String::new();
+        while let Some(chunk) = stream.next().await {
+            match chunk {
+                Ok(response) => {
+                    // Extract text from the response
+                    if let Some(content) = &response.content {
+                        for part in &content.parts {
+                            if let Part::Text { text } = part {
+                                full_response.push_str(text);
+                            }
+                        }
+                    }
+                }
+                Err(e) => {
+                    return Err(anyhow::anyhow!("Stream error: {}", e));
+                }
+            }
+        }
+
+        if full_response.is_empty() {
+            return Err(anyhow::anyhow!("AI returned empty response"));
+        }
+
+        Ok(full_response)
+    }
+
     /// Gets the provider being used by this client
     pub fn provider(&self) -> ModelProvider {
         self.provider
