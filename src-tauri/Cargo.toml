@@ -11,16 +11,21 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = [] }
 tauri-plugin-shell = "2"
+tauri-plugin-notification = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["full"] }
+futures = "0.3"
 rusqlite = { version = "0.38", features = ["bundled", "serde_json", "chrono"] }
 chrono = { version = "0.4", features = ["serde"] }
 anyhow = "1.0"
 thiserror = "2.0"
+dotenv = "0.15"
+reqwest = { version = "0.12", features = ["json"] }
+base64 = "0.22"
 
-# ADK-Rust AI 客户端（后续添加）
-# adk-core = "0.3"
-# adk-agent = "0.3"
-# adk-model = { version = "0.3", features = ["openai", "anthropic"] }
-# tokio-cron-scheduler = "0.15"
+# ADK-Rust AI 客户端
+adk-core = "0.3"
+adk-agent = "0.3"
+adk-model = { version = "0.3", features = ["openai", "anthropic"] }
+tokio-cron-scheduler = "0.15"

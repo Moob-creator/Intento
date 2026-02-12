@@ -244,6 +244,62 @@ impl Database {
         Ok(tasks)
     }
 
+    /// Get tasks expiring within a time window (in seconds)
+    /// Returns tasks that have a deadline between now and now + window_seconds
+    pub fn get_expiring_tasks(&self, window_seconds: i64) -> Result<Vec<Task>> {
+        let conn = self.conn.lock().unwrap();
+        let now = chrono::Utc::now().timestamp();
+        let deadline_threshold = now + window_seconds;
+
+        let mut stmt = conn
+            .prepare(
+                "SELECT id, title, description, status, priority, deadline, created_at,
+                 updated_at, completed_at, context, tags, attachments, reminder_time, is_deleted
+                 FROM tasks
+                 WHERE is_deleted = 0
+                 AND status != 'done'
+                 AND deadline IS NOT NULL
+                 AND deadline > ?1
+                 AND deadline <= ?2
+                 ORDER BY deadline ASC",
+            )
+            .context("Failed to prepare expiring tasks query")?;
+
+        let tasks = stmt
+            .query_map([now, deadline_threshold], |row| {
+                let tags_json: Option<String> = row.get(10)?;
+                let tags = tags_json.and_then(|s| serde_json::from_str(&s).ok());
+
+                let attachments_json: Option<String> = row.get(11)?;
+                let attachments = attachments_json.and_then(|s| serde_json::from_str(&s).ok());
+
+                let status_str: String = row.get(3)?;
+                let priority_str: String = row.get(4)?;
+
+                Ok(Task {
+                    id: Some(row.get(0)?),
+                    title: row.get(1)?,
+                    description: row.get(2)?,
+                    status: TaskStatus::from_str(&status_str).unwrap(),
+                    priority: Priority::from_str(&priority_str).unwrap(),
+                    deadline: row.get(5)?,
+                    created_at: row.get(6)?,
+                    updated_at: row.get(7)?,
+                    completed_at: row.get(8)?,
+                    context: row.get(9)?,
+                    tags,
+                    attachments,
+                    reminder_time: row.get(12)?,
+                    is_deleted: row.get::<_, i32>(13)? != 0,
+                })
+            })
+            .context("Failed to query expiring tasks")?
+            .collect::<Result<Vec<_>, _>>()
+            .context("Failed to collect expiring tasks")?;
+
+        Ok(tasks)
+    }
+
     // ========================================
     // Summary operations
     // ========================================
