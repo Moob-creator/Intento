@@ -211,7 +211,7 @@ function App() {
 
     setIsParsing(true);
     setParseError(null);
-    setTextInputVisible(false);
+    // Keep modal open during parsing to show loading state
 
     // Set timeout for API call (30 seconds)
     const timeoutPromise = new Promise<never>((_, reject) => {
@@ -243,14 +243,15 @@ function App() {
         warnings: [],
       };
 
-      // Use the operations dialog instead of the old confirm dialog
+      // Close input modal and show operations dialog
+      setTextInputVisible(false);
       setImageParseResult(operationResult);
       setShowOperationsDialog(true);
     } catch (error) {
       console.error('Failed to parse text input:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to parse your input. Please try again.';
       setParseError(errorMessage);
-      setTextInputVisible(true);
+      // Keep modal open to show error
     } finally {
       setIsParsing(false);
     }
@@ -265,7 +266,7 @@ function App() {
 
     setIsParsing(true);
     setParseError(null);
-    setTextInputVisible(false);
+    // Keep modal open during parsing to show loading state
 
     // Set timeout for API call (30 seconds)
     const timeoutPromise = new Promise<never>((_, reject) => {
@@ -294,7 +295,8 @@ function App() {
 
       console.log('Image parse result:', result);
 
-      // Show operations confirmation dialog
+      // Close input modal and show operations confirmation dialog
+      setTextInputVisible(false);
       setImageParseResult(result);
       setShowOperationsDialog(true);
       setPastedImage(null); // Clear image after successful parse
@@ -304,7 +306,7 @@ function App() {
       console.error('Error details:', errorMessage);
 
       setParseError(`图片分析失败: ${errorMessage}`);
-      setTextInputVisible(true);
+      // Keep modal open to show error
     } finally {
       setIsParsing(false);
     }
@@ -815,7 +817,35 @@ function App() {
 
           {/* Modal content */}
           <div className="fixed inset-0 z-50 flex items-center justify-center p-8 pointer-events-none">
-            <div className="w-full max-w-3xl bg-white rounded-3xl shadow-2xl pointer-events-auto animate-scale-up">
+            <div className="w-full max-w-3xl bg-white rounded-3xl shadow-2xl pointer-events-auto animate-scale-up relative">
+              {/* Loading overlay */}
+              {isParsing && (
+                <div className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-3xl z-10 flex flex-col items-center justify-center">
+                  <svg
+                    className="animate-spin h-12 w-12 text-amber-500 mb-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  <p className="text-lg font-semibold text-neutral-dark mb-1">正在分析任务...</p>
+                  <p className="text-sm text-neutral-dark/60">请稍候，通常需要 5-10 秒</p>
+                </div>
+              )}
+
               <div className="p-8">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
