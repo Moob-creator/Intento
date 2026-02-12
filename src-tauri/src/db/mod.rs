@@ -44,10 +44,31 @@ impl Database {
     fn init_tables(&self) -> Result<()> {
         let conn = self.conn.lock().unwrap();
 
-        // Read and execute migration script
+        // Read and execute v1 migration script
         let migration_sql = include_str!("../../migrations/v1_initial.sql");
         conn.execute_batch(migration_sql)
-            .context("Failed to execute migration script")?;
+            .context("Failed to execute v1 migration script")?;
+
+        drop(conn); // Release lock before calling run_migrations
+
+        // Run additional migrations
+        self.run_migrations()?;
+
+        Ok(())
+    }
+
+    /// Run database migrations based on current version
+    fn run_migrations(&self) -> Result<()> {
+        let version = self.get_version()?;
+        let conn = self.conn.lock().unwrap();
+
+        // Migration v2: Add tag support to summaries
+        if version < 2 {
+            let migration_v2 = include_str!("../../migrations/v2_add_tag_support.sql");
+            conn.execute_batch(migration_v2)
+                .context("Failed to execute v2 migration")?;
+            println!("✓ Applied migration v2: Add tag support to summaries");
+        }
 
         Ok(())
     }
@@ -339,13 +360,16 @@ impl Database {
 
         let summary = conn
             .query_row(
-                "SELECT id, summary_type, period_start, period_end, content, statistics,
-                 task_ids, created_at, is_deleted
+                "SELECT id, summary_type, period_start, period_end, tag, tag_filter,
+                 content, statistics, task_ids, created_at, is_deleted
                  FROM summaries WHERE id = ?1 AND is_deleted = 0",
                 [id],
                 |row| {
-                    let task_ids_json: Option<String> = row.get(6)?;
+                    let task_ids_json: Option<String> = row.get(8)?;
                     let task_ids = task_ids_json.and_then(|s| serde_json::from_str(&s).ok());
+
+                    let tag_filter_json: Option<String> = row.get(5)?;
+                    let tag_filter = tag_filter_json.and_then(|s| serde_json::from_str(&s).ok());
 
                     let summary_type_str: String = row.get(1)?;
 
@@ -354,11 +378,13 @@ impl Database {
                         summary_type: SummaryType::from_str(&summary_type_str).unwrap(),
                         period_start: row.get(2)?,
                         period_end: row.get(3)?,
-                        content: row.get(4)?,
-                        statistics: row.get(5)?,
+                        tag: row.get(4)?,
+                        tag_filter,
+                        content: row.get(6)?,
+                        statistics: row.get(7)?,
                         task_ids,
-                        created_at: row.get(7)?,
-                        is_deleted: row.get::<_, i32>(8)? != 0,
+                        created_at: row.get(9)?,
+                        is_deleted: row.get::<_, i32>(10)? != 0,
                     })
                 },
             )
