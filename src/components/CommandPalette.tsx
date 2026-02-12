@@ -7,7 +7,6 @@ import {
   Clock,
   Settings,
   HelpCircle,
-  Bell,
   Search,
   CheckCircle2,
   Circle,
@@ -24,6 +23,8 @@ interface CommandPaletteProps {
   onShowStats: () => void;
   onShowSettings: () => void;
   onTestNotification: () => void;
+  onTodayTasks: () => void;
+  onDueSoon: () => void;
   onTaskSelect: (task: Task) => void;
 }
 
@@ -45,19 +46,23 @@ export function CommandPalette({
   onShowStats,
   onShowSettings,
   onTestNotification,
+  onTodayTasks,
+  onDueSoon,
   onTaskSelect,
 }: CommandPaletteProps) {
   const [search, setSearch] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const isComposingRef = useRef(false);
+  const compositionEndTimeRef = useRef(0);
 
   // Commands list
   const commands: Command[] = useMemo(
     () => [
       {
         id: 'ai-add',
-        label: 'AI Add Task',
+        label: 'AI',
         icon: <Sparkles className="text-amber-500" size={18} />,
         action: () => {
           onAIAdd();
@@ -93,7 +98,7 @@ export function CommandPalette({
         label: "Today's Tasks",
         icon: <Calendar className="text-green-500" size={18} />,
         action: () => {
-          // Filter to today's tasks
+          onTodayTasks();
           onClose();
         },
         category: 'filter',
@@ -104,7 +109,7 @@ export function CommandPalette({
         label: 'Due Soon',
         icon: <Clock className="text-orange-500" size={18} />,
         action: () => {
-          // Filter to tasks due soon
+          onDueSoon();
           onClose();
         },
         category: 'filter',
@@ -131,19 +136,8 @@ export function CommandPalette({
         category: 'navigation',
         keywords: ['help', 'support', 'docs', 'documentation'],
       },
-      {
-        id: 'test-notification',
-        label: 'Test Notification',
-        icon: <Bell className="text-purple-500" size={18} />,
-        action: () => {
-          onTestNotification();
-          onClose();
-        },
-        category: 'action',
-        keywords: ['test', 'notification', 'reminder', 'alert'],
-      },
     ],
-    [onAIAdd, onNewTask, onShowStats, onShowSettings, onTestNotification, onClose]
+    [onAIAdd, onNewTask, onShowStats, onShowSettings, onTestNotification, onTodayTasks, onDueSoon, onClose]
   );
 
   // Filter commands and tasks based on search
@@ -177,6 +171,20 @@ export function CommandPalette({
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Skip all shortcut handling during IME composition,
+      // or within a short window after composition ends.
+      // When the user presses Escape/Enter to dismiss the IME,
+      // compositionend fires before keydown, so we use a
+      // timestamp-based cooldown to absorb that trailing key.
+      if (
+        isComposingRef.current ||
+        e.isComposing ||
+        e.keyCode === 229 ||
+        Date.now() - compositionEndTimeRef.current < 200
+      ) {
+        return;
+      }
+
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault();
@@ -200,14 +208,20 @@ export function CommandPalette({
           break;
         case 'Escape':
           e.preventDefault();
-          onClose();
+          // If search has text, clear it first; otherwise close
+          if (search.trim()) {
+            setSearch('');
+            setSelectedIndex(0);
+          } else {
+            onClose();
+          }
           break;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, selectedIndex, totalItems, filteredCommands, filteredTasks, onTaskSelect, onClose]);
+  }, [isOpen, search, selectedIndex, totalItems, filteredCommands, filteredTasks, onTaskSelect, onClose]);
 
   // Focus input when opened
   useEffect(() => {
@@ -240,7 +254,7 @@ export function CommandPalette({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search input */}
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-neutral-light/60">
+        <div className="flex items-center gap-4 px-5 py-4 border-b border-neutral-light/60">
           <Search size={20} className="text-neutral-dark/40 flex-shrink-0" />
           <input
             ref={inputRef}
@@ -250,10 +264,15 @@ export function CommandPalette({
               setSearch(e.target.value);
               setSelectedIndex(0);
             }}
+            onCompositionStart={() => { isComposingRef.current = true; }}
+            onCompositionEnd={() => {
+              isComposingRef.current = false;
+              compositionEndTimeRef.current = Date.now();
+            }}
             placeholder="Search tasks or run a command..."
-            className="flex-1 text-base text-neutral-dark placeholder:text-neutral-dark/40 bg-transparent outline-none"
+            className="flex-1 text-base text-neutral-dark placeholder:text-neutral-dark/40 bg-transparent outline-none border-none shadow-none focus:outline-none focus:ring-0 [&:focus-visible]:outline-none"
           />
-          <kbd className="px-2 py-1 text-xs font-medium text-neutral-dark/60 bg-neutral-light/40 rounded">
+          <kbd className="px-3 py-1 text-xs font-medium text-neutral-dark/60 bg-neutral-light/40 rounded flex-shrink-0">
             ESC
           </kbd>
         </div>

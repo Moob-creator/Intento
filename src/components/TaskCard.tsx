@@ -1,4 +1,5 @@
-import { Clock, Check, Edit2, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Clock, Check, Edit2, Trash2, X } from 'lucide-react';
 import type { Task } from '../types/task';
 
 interface TaskCardProps {
@@ -18,6 +19,7 @@ export function TaskCard({
   onEdit,
   onDelete,
 }: TaskCardProps) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const isOverdue = task.deadline && task.deadline < Date.now() / 1000 && task.status !== 'done';
   const isDone = task.status === 'done';
 
@@ -57,9 +59,18 @@ export function TaskCard({
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (onDelete && task.id && confirm('Are you sure you want to delete this task?')) {
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    if (onDelete && task.id) {
       onDelete(task.id);
     }
+  };
+
+  const handleCancelDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setConfirmDelete(false);
   };
 
   return (
@@ -96,7 +107,7 @@ export function TaskCard({
             <Edit2 size={16} />
           </button>
         )}
-        {onDelete && (
+        {onDelete && !confirmDelete && (
           <button
             onClick={handleDelete}
             className="p-1.5 bg-white text-red-600 hover:bg-red-50 rounded-lg shadow-sm transition-all duration-150"
@@ -104,6 +115,24 @@ export function TaskCard({
           >
             <Trash2 size={16} />
           </button>
+        )}
+        {confirmDelete && (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={handleCancelDelete}
+              className="p-1.5 bg-white text-gray-500 hover:bg-gray-50 rounded-lg shadow-sm transition-all duration-150"
+              title="Cancel"
+            >
+              <X size={16} />
+            </button>
+            <button
+              onClick={handleDelete}
+              className="px-2.5 py-1 bg-red-600 text-white hover:bg-red-700 rounded-lg shadow-sm transition-all duration-150 text-xs font-medium"
+              title="Confirm delete"
+            >
+              Delete
+            </button>
+          </div>
         )}
       </div>
 

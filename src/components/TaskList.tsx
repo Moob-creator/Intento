@@ -38,7 +38,7 @@ export function TaskList({
         <p className="text-neutral-dark/60 text-sm max-w-sm">
           Get started by creating a new task or use AI to quickly add tasks with natural language
         </p>
-        <div className="mt-6 flex gap-3">
+        <div className="mt-6 flex items-center justify-center gap-3">
           <kbd className="px-3 py-1.5 text-sm font-medium text-neutral-dark/80 bg-white border border-neutral-light rounded-lg">
             ⌘K
           </kbd>

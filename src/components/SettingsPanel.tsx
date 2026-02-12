@@ -29,8 +29,6 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
     retention_days: 365,
   });
 
-  const [isLoading, setIsLoading] = useState(false);
-
   // Load settings when panel opens
   useEffect(() => {
     if (isOpen) {
@@ -44,35 +42,33 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
       setAutoSummarySettings(settings);
     } catch (err) {
       console.error('Failed to load auto summary settings:', err);
-      // Use default values on error
     }
   };
 
-  const saveSettings = async () => {
-    setIsLoading(true);
+  // 自动保存：设置变更后自动持久化
+  const saveSettings = async (settings: AutoSummarySettings) => {
     try {
-      await invoke('update_auto_summary_settings', { settings: autoSummarySettings });
-      console.log('Settings saved successfully');
+      await invoke('update_auto_summary_settings', { settings });
     } catch (err) {
       console.error('Failed to save settings:', err);
-      alert('保存设置失败: ' + err);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleToggle = (field: keyof AutoSummarySettings) => {
-    setAutoSummarySettings(prev => ({
-      ...prev,
-      [field]: !prev[field],
-    }));
+    setAutoSummarySettings(prev => {
+      const updated = { ...prev, [field]: !prev[field] };
+      saveSettings(updated);
+      return updated;
+    });
   };
 
   const handleRetentionChange = (value: number) => {
-    setAutoSummarySettings(prev => ({
-      ...prev,
-      retention_days: Math.max(30, Math.min(3650, value)),
-    }));
+    const clamped = Math.max(30, Math.min(3650, value));
+    setAutoSummarySettings(prev => {
+      const updated = { ...prev, retention_days: clamped };
+      saveSettings(updated);
+      return updated;
+    });
   };
   if (!isOpen) return null;
 
@@ -330,19 +326,11 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-neutral-light/60 bg-neutral-light/20 flex gap-3">
-          <button
-            onClick={saveSettings}
-            disabled={isLoading}
-            className="flex-1 py-2 px-4 bg-primary text-white font-semibold rounded-lg
-                     hover:bg-primary-dark transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? '保存中...' : '保存设置'}
-          </button>
+        <div className="px-6 py-4 border-t border-neutral-light/60 bg-neutral-light/20">
           <button
             onClick={onClose}
-            className="flex-1 py-2 px-4 bg-neutral-light/60 text-neutral-dark font-semibold rounded-lg
-                     hover:bg-neutral-light transition-all duration-200"
+            className="w-full py-2 px-4 bg-primary text-white font-semibold rounded-lg
+                     hover:bg-primary-dark transition-all duration-200"
           >
             关闭
           </button>
