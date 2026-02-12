@@ -64,6 +64,11 @@ impl Database {
 
         // Migration v2: Add tag support to summaries
         if version < 2 {
+            // Try to add columns - ignore error if they already exist
+            let _ = conn.execute("ALTER TABLE summaries ADD COLUMN tag TEXT", []);
+            let _ = conn.execute("ALTER TABLE summaries ADD COLUMN tag_filter TEXT", []);
+
+            // Execute the rest of the migration (indexes and version update)
             let migration_v2 = include_str!("../../migrations/v2_add_tag_support.sql");
             conn.execute_batch(migration_v2)
                 .context("Failed to execute v2 migration")?;
