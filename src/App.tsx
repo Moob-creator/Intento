@@ -35,6 +35,7 @@ function App() {
   const [statisticsPanelOpen, setStatisticsPanelOpen] = useState(false);
   const [settingsPanelOpen, setSettingsPanelOpen] = useState(false);
   const [summaryPanelOpen, setSummaryPanelOpen] = useState(false);  // ✨ Phase 5
+  const [initialViewMode, setInitialViewMode] = useState<'current' | 'history'>('current');  // ✨ Phase 5.4
 
   // Filter state
   const [statusFilter, setStatusFilter] = useState<'all' | TaskStatus>('all');
@@ -157,8 +158,8 @@ function App() {
   // ✨ Phase 5: Handle view summary history from sidebar context menu
   const handleViewSummaryHistory = (tag: string) => {
     setSelectedTag(tag);
+    setInitialViewMode('history');
     setSummaryPanelOpen(true);
-    // TODO: Add history view mode in Phase 5.2
   };
 
   // Handle deleting task
@@ -889,8 +890,12 @@ function App() {
       {/* ✨ Phase 5: Summary Panel */}
       <SummaryPanel
         isOpen={summaryPanelOpen}
-        onClose={() => setSummaryPanelOpen(false)}
+        onClose={() => {
+          setSummaryPanelOpen(false);
+          setInitialViewMode('current');
+        }}
         selectedTag={selectedTag}
+        initialViewMode={initialViewMode}
       />
     </div>
   );

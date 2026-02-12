@@ -2,14 +2,22 @@
 
 ## ✅ 已完成功能
 
+### 0. 代码清理
+- ✅ 删除过时的 TODO 注释
+- ✅ 支持从 Sidebar 直接打开历史视图模式
+- ✅ 优化导出文件名格式 (tag-period-summary.md)
+- ✅ 添加导出成功 Toast 提示
+
 ### 1. 数据库层 (Database)
 - ✅ 数据库迁移 v2: 添加 tag 和 tag_filter 字段
 - ✅ 数据库迁移 v3: 修复 summary_type CHECK 约束（支持 weekly, semi_annual）
+- ✅ 数据库迁移 v4: 添加 settings 表
 - ✅ `create_summary()` - 创建总结
 - ✅ `get_summary(id)` - 获取单个总结
 - ✅ `find_summary_by_period()` - 查找特定时段的总结（用于缓存）
 - ✅ `list_summaries()` - 列出总结（支持过滤和分页）
 - ✅ `delete_summary(id)` - 软删除总结
+- ✅ `get_setting()`, `set_setting()`, `get_settings_by_prefix()` - 设置管理
 
 ### 2. 后端核心逻辑 (SummaryGenerator)
 - ✅ `generate_summary()` - AI 生成总结
@@ -37,15 +45,21 @@
 - ✅ `get_summary` - 获取单个总结
 - ✅ `delete_summary` - 删除总结
 - ✅ `export_summary` - 导出为 Markdown/Text
+- ✅ `get_auto_summary_settings` - 获取自动总结设置
+- ✅ `update_auto_summary_settings` - 更新自动总结设置
 
 ### 5. 前端组件 (React)
 - ✅ `SummaryPanel` - 480px 右侧滑出面板
 - ✅ `TimeRangeSelector` - 5 种时间范围选择器（每日/周/月/半年/年）
 - ✅ `SummaryContent` - 总结内容渲染（统计卡片 + Markdown）
+- ✅ `SummaryTimeline` - 历史总结时间线组件
+- ✅ `Toast` - Toast 通知组件
 - ✅ `ContextMenu` - Sidebar Tag 右键菜单
+- ✅ `CustomSelect` - 自定义下拉框组件
 - ✅ TopBar 总结按钮（紫色 FileText 图标）
 - ✅ Sidebar 右键菜单集成（生成总结、查看历史）
 - ✅ 键盘快捷键（⌘R 切换总结面板）
+- ✅ SettingsPanel 添加自动总结配置区块
 
 ### 6. UI/UX 优化
 - ✅ AI 输入对话框布局优化（更宽松、文本可选）
@@ -73,33 +87,40 @@
 ### 新增文件
 - `src-tauri/migrations/v2_add_tag_support.sql`
 - `src-tauri/migrations/v3_fix_summary_types.sql`
+- `src-tauri/migrations/v4_add_settings_table.sql`
 - `src-tauri/src/commands/summary.rs`
+- `src-tauri/src/commands/settings.rs`
 - `src-tauri/src/summary/generator.rs`
 - `src-tauri/src/summary/period.rs`
 - `src-tauri/src/summary/scheduler_jobs.rs` (完整实现)
 - `src/components/SummaryPanel.tsx`
 - `src/components/TimeRangeSelector.tsx`
 - `src/components/SummaryContent.tsx`
+- `src/components/SummaryTimeline.tsx`
 - `src/components/ContextMenu.tsx`
 - `src/components/CustomSelect.tsx`
+- `src/components/Toast.tsx`
+- `src/hooks/useToast.tsx`
 - `src/types/summary.ts`
 
 ### 修改文件
-- `src-tauri/src/db/mod.rs` (+240 lines)
+- `src-tauri/src/db/mod.rs` (+300 lines) - 添加设置管理
 - `src-tauri/src/db/models.rs` (+150 lines)
 - `src-tauri/src/scheduler/mod.rs` (+132 lines) - ✨ Phase 5.2
-- `src-tauri/src/main.rs` (+5 lines) - 启用自动总结
-- `src/App.tsx` (+120 lines)
+- `src-tauri/src/main.rs` (+7 lines) - 启用自动总结 + 设置 commands
+- `src-tauri/src/commands/mod.rs` (+1 line) - 注册 settings 模块
+- `src/App.tsx` (+130 lines) - 历史视图模式支持
 - `src/components/TopBar.tsx` (+20 lines)
 - `src/components/Sidebar.tsx` (+40 lines)
 - `src/components/TaskDetailPanel.tsx` (+50 lines, 使用 CustomSelect)
-- `src/App.css` (+30 lines, 动画)
+- `src/components/SettingsPanel.tsx` (+70 lines) - 自动总结配置区块
+- `src/App.css` (+50 lines, 动画 + Toast 样式)
 
 ### 总代码量
-- 新增 Rust 代码：~1100 lines (包含 Phase 5.2)
-- 新增 TypeScript 代码：~600 lines
-- 新增 SQL：~80 lines
-- **总计：~1780 lines**
+- 新增 Rust 代码：~1250 lines (包含 Phase 5.2 + 5.3)
+- 新增 TypeScript 代码：~800 lines
+- 新增 SQL：~100 lines
+- **总计：~2150 lines**
 
 ## 📅 定时任务时间表
 
@@ -115,27 +136,25 @@
 
 ## 🎯 剩余 TODOs
 
-### Phase 5.2: 定时任务集成 (P0)
-- ✅ 实现 `generate_daily_summaries()`
-- ✅ 实现 `generate_weekly_summaries()`
-- ✅ 实现 `generate_monthly_summaries()`
-- ✅ 实现 `generate_semi_annual_summaries()`
-- ✅ 实现 `generate_yearly_summaries()`
-- ✅ 添加到 TaskScheduler
-- ✅ 错误处理和日志
+### Phase 5.4: 历史浏览功能
+- ✅ 前端添加历史视图模式
+- ✅ Timeline 组件实现 (SummaryTimeline.tsx)
+- ✅ 支持从 Sidebar 直接打开历史视图
+- ✅ 所有下拉框统一主题 (CustomSelect)
+- [ ] 分页加载优化 (可选)
 
-**Phase 5.2 状态: ✅ 100% 完成**
-
-### Phase 5.2: 历史浏览功能
-- [ ] 前端添加历史视图模式 (`src/App.tsx:161`)
-- [ ] Timeline 组件实现
-- [ ] 分页加载
+**Phase 5.4 状态: ✅ 100% 完成**
 
 ### Phase 5.3: 设置面板集成 (P1)
-- [ ] Settings UI 添加自动总结选项
-- [ ] 开启/关闭开关
-- [ ] 生成频率配置
-- [ ] 保留时长配置
+- ✅ 数据库迁移 v4: 添加 settings 表
+- ✅ Database 层添加设置 CRUD 方法 (get_setting, set_setting, get_settings_by_prefix)
+- ✅ Settings commands 实现 (get_auto_summary_settings, update_auto_summary_settings)
+- ✅ SettingsPanel UI 添加自动总结配置区块
+- ✅ 开启/关闭主开关 + 5 种频率独立开关
+- ✅ 保留时长配置 (30-3650 天)
+- ✅ 设置持久化到数据库
+
+**Phase 5.3 状态: ✅ 95% 完成** (正在编译测试)
 
 ## 📈 实现进度
 
@@ -150,11 +169,11 @@
 ### Phase 5 整体进度
 - Phase 5.1: ✅ 100% 完成 (核心总结功能)
 - Phase 5.2: ✅ 100% 完成 (定时任务集成)
-- Phase 5.3: ⏳ 0% (设置面板集成 - 待开始)
-- Phase 5.4: 🔄 50% (导出功能已实现，历史浏览待实现)
+- Phase 5.3: ✅ 95% 完成 (设置面板集成 - 编译测试中)
+- Phase 5.4: ✅ 100% 完成 (历史浏览 + 导出功能 + Toast 提示)
 - Phase 5.5: ⏳ 0% (优化增强 - 待开始)
 
-**整体进度**: 约 50% 完成
+**整体进度**: 约 85% 完成
 
 ## 🚀 下一步建议
 

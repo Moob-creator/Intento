@@ -154,3 +154,19 @@ select:focus-visible {
 .animate-scale-up {
   animation: scaleUp 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* Slide in from right animation for toasts */
+@keyframes slideInRight {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

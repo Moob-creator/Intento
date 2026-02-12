@@ -48,6 +48,9 @@ fn main() {
             commands::summary::get_summary,
             commands::summary::delete_summary,
             commands::summary::export_summary,
+            // ✨ Phase 5.3: Settings commands
+            commands::settings::get_auto_summary_settings,
+            commands::settings::update_auto_summary_settings,
         ])
         .setup(|app| {
             // Initialize database

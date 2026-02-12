@@ -71,8 +71,7 @@ pub async fn get_or_generate_summary(
     let summary_type = SummaryType::from_str(&summary_type)
         .map_err(|e| format!("Invalid summary type: {}", e))?;
 
-    // TODO: Check if summary exists in database first
-    // For now, just generate new one
+    // get_or_generate_summary checks cache first before generating
     let ai_client = ai_state.get_or_init().await?;
     let generator = SummaryGenerator::new(db.inner().clone(), ai_client);
 

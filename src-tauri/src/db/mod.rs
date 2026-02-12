@@ -83,6 +83,14 @@ impl Database {
             println!("✓ Applied migration v3: Fix summary types to support weekly and semi_annual");
         }
 
+        // Migration v4: Add settings table
+        if version < 4 {
+            let migration_v4 = include_str!("../../migrations/v4_add_settings_table.sql");
+            conn.execute_batch(migration_v4)
+                .context("Failed to execute v4 migration")?;
+            println!("✓ Applied migration v4: Add settings table");
+        }
+
         Ok(())
     }
 
@@ -665,6 +673,57 @@ impl Database {
             .context("Failed to clean expired cache")?;
 
         Ok(deleted)
+    }
+
+    // ========================================
+    // Settings operations
+    // ========================================
+
+    /// Get a setting value by key
+    pub fn get_setting(&self, key: &str) -> Result<Option<String>> {
+        let conn = self.conn.lock().unwrap();
+        let value: Option<String> = conn
+            .query_row(
+                "SELECT value FROM settings WHERE key = ?1",
+                [key],
+                |row| row.get(0),
+            )
+            .optional()
+            .context("Failed to get setting")?;
+        Ok(value)
+    }
+
+    /// Set a setting value (insert or update)
+    pub fn set_setting(&self, key: &str, value: &str) -> Result<()> {
+        let conn = self.conn.lock().unwrap();
+        let now = chrono::Utc::now().timestamp();
+
+        conn.execute(
+            "INSERT INTO settings (key, value, updated_at) VALUES (?1, ?2, ?3)
+             ON CONFLICT(key) DO UPDATE SET value = ?2, updated_at = ?3",
+            rusqlite::params![key, value, now],
+        )
+        .context("Failed to set setting")?;
+
+        Ok(())
+    }
+
+    /// Get multiple settings by prefix
+    pub fn get_settings_by_prefix(&self, prefix: &str) -> Result<Vec<(String, String)>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn
+            .prepare("SELECT key, value FROM settings WHERE key LIKE ?1 || '%'")
+            .context("Failed to prepare settings query")?;
+
+        let settings = stmt
+            .query_map([prefix], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+            })
+            .context("Failed to query settings")?
+            .collect::<Result<Vec<_>, _>>()
+            .context("Failed to collect settings")?;
+
+        Ok(settings)
     }
 }
 
