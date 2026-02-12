@@ -48,8 +48,14 @@ impl SummaryGenerator {
             task_ids,
         );
 
-        // For now, return without saving to database (will implement DB methods later)
-        Ok(summary)
+        // Save to database
+        let summary_id = self.db.create_summary(&summary)
+            .map_err(|e| anyhow::anyhow!("Failed to save summary: {}", e))?;
+
+        Ok(Summary {
+            id: Some(summary_id),
+            ..summary
+        })
     }
 
     /// Get or generate summary (returns existing if found, otherwise generates new one)

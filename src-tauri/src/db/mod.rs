@@ -334,14 +334,21 @@ impl Database {
             .as_ref()
             .map(|t| serde_json::to_string(t).unwrap());
 
+        let tag_filter_json = summary
+            .tag_filter
+            .as_ref()
+            .map(|t| serde_json::to_string(t).unwrap());
+
         conn.execute(
-            "INSERT INTO summaries (summary_type, period_start, period_end, content,
-             statistics, task_ids, created_at, is_deleted)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            "INSERT INTO summaries (summary_type, period_start, period_end, tag, tag_filter,
+             content, statistics, task_ids, created_at, is_deleted)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
             (
                 summary.summary_type.as_str(),
                 &summary.period_start,
                 &summary.period_end,
+                &summary.tag,
+                &tag_filter_json,
                 &summary.content,
                 &summary.statistics,
                 &task_ids_json,

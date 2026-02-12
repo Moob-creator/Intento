@@ -5,6 +5,7 @@ mod ai;
 mod commands;
 mod db;
 mod scheduler;
+mod summary;  // ✨ Phase 5: Summary module
 
 use tauri::Manager;
 
@@ -40,6 +41,13 @@ fn main() {
             commands::notification::send_notification,
             commands::notification::check_expiring_tasks,
             commands::notification::test_notification,
+            // ✨ Phase 5: Summary commands
+            commands::summary::generate_summary,
+            commands::summary::get_or_generate_summary,
+            commands::summary::list_summaries,
+            commands::summary::get_summary,
+            commands::summary::delete_summary,
+            commands::summary::export_summary,
         ])
         .setup(|app| {
             // Initialize database
@@ -56,8 +64,11 @@ fn main() {
             // Database is Clone, so we can manage it directly
             app.manage(database.clone());
 
-            // Initialize AI client state
+            // Initialize AI client state (shared between ai and summary commands)
             app.manage(commands::ai::AiClientState::new());
+
+            // Initialize summary AI client state
+            app.manage(commands::summary::AiClientState::new());
 
             // Initialize and start the task scheduler
             let app_handle = app.handle().clone();
