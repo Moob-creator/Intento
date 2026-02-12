@@ -64,9 +64,73 @@ pub fn build_parse_task_prompt(user_input: &str, current_time: &str) -> String {
     )
 }
 
+/// Constructs the user prompt for task parsing with existing tags context
+pub fn build_parse_task_prompt_with_tags(
+    user_input: &str,
+    current_time: &str,
+    existing_tags: Option<&[String]>,
+) -> String {
+    let base_prompt = PARSE_TASK_SYSTEM_PROMPT.replace("{current_time}", current_time);
+
+    let tag_context = if let Some(tags) = existing_tags {
+        if tags.is_empty() {
+            String::new()
+        } else {
+            format!(
+                "\n\nExisting tags in the system: [{}]\n\
+                IMPORTANT Tag Guidelines:\n\
+                - PREFER using existing tags when they match the task context\n\
+                - If the task clearly relates to an existing tag (e.g., task mentions 'work' and 'work' tag exists), use it\n\
+                - If no existing tags match or you're uncertain, use the tag: \"待分类\" (pending classification)\n\
+                - This allows users to manually classify tasks later\n\
+                - Examples:\n\
+                  * Task: \"完成工作报告\" + existing tag \"工作\" → use [\"工作\"]\n\
+                  * Task: \"买菜\" + no matching tags → use [\"待分类\"]\n\
+                  * Task: \"Fix bug in authentication\" + existing tag \"bug\" → use [\"bug\"]",
+                tags.join(", ")
+            )
+        }
+    } else {
+        "\n\nNo existing tags. Use [\"待分类\"] for unclassified tasks.".to_string()
+    };
+
+    format!(
+        "{}{}\n\nUser input: {}",
+        base_prompt, tag_context, user_input
+    )
+}
+
 /// Constructs the user prompt for image-based task parsing
 pub fn build_parse_image_prompt(current_time: &str) -> String {
     PARSE_IMAGE_SYSTEM_PROMPT.replace("{current_time}", current_time)
+}
+
+/// Constructs the user prompt for image-based task parsing with existing tags context
+pub fn build_parse_image_prompt_with_tags(
+    current_time: &str,
+    existing_tags: Option<&[String]>,
+) -> String {
+    let base_prompt = PARSE_IMAGE_SYSTEM_PROMPT.replace("{current_time}", current_time);
+
+    let tag_context = if let Some(tags) = existing_tags {
+        if tags.is_empty() {
+            String::new()
+        } else {
+            format!(
+                "\n\nExisting tags in the system: [{}]\n\
+                IMPORTANT Tag Guidelines:\n\
+                - PREFER using existing tags when they match the task context\n\
+                - If the image content clearly relates to an existing tag, use it\n\
+                - If no existing tags match or you're uncertain, use the tag: \"待分类\" (pending classification)\n\
+                - This allows users to manually classify tasks later",
+                tags.join(", ")
+            )
+        }
+    } else {
+        "\n\nNo existing tags. Use [\"待分类\"] for unclassified tasks.".to_string()
+    };
+
+    format!("{}{}", base_prompt, tag_context)
 }
 
 #[cfg(test)]

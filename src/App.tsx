@@ -213,6 +213,11 @@ function App() {
     setParseError(null);
     // Keep modal open during parsing to show loading state
 
+    // Extract existing tags from all tasks
+    const existingTags = Array.from(
+      new Set(tasks.flatMap(task => task.tags || []))
+    ).sort();
+
     // Set timeout for API call (30 seconds)
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => reject(new Error('请求超时，请检查网络连接后重试')), 30000);
@@ -220,7 +225,10 @@ function App() {
 
     try {
       const result = await Promise.race([
-        invoke<ParsedTask>('parse_text_input', { text: trimmed }),
+        invoke<ParsedTask>('parse_text_input', {
+          text: trimmed,
+          existingTags: existingTags.length > 0 ? existingTags : undefined
+        }),
         timeoutPromise,
       ]);
 
@@ -268,6 +276,11 @@ function App() {
     setParseError(null);
     // Keep modal open during parsing to show loading state
 
+    // Extract existing tags from all tasks
+    const existingTags = Array.from(
+      new Set(tasks.flatMap(task => task.tags || []))
+    ).sort();
+
     // Set timeout for API call (30 seconds)
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => reject(new Error('图片分析超时，请检查网络连接后重试')), 30000);
@@ -289,6 +302,7 @@ function App() {
           imageBase64: base64Data,
           imageType: imageType,
           useAllTools: true, // Enable all operations (create, update, complete, delete, etc.)
+          existingTags: existingTags.length > 0 ? existingTags : undefined
         }),
         timeoutPromise,
       ]);

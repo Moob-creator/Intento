@@ -39,6 +39,7 @@ impl AiClientState {
 ///
 /// # Arguments
 /// * `text` - Natural language description of a task
+/// * `existing_tags` - Optional list of existing tags from current tasks
 ///
 /// # Returns
 /// A `ParsedTask` object with extracted information
@@ -53,13 +54,15 @@ impl AiClientState {
 /// ```javascript
 /// // From frontend
 /// const result = await invoke('parse_text_input', {
-///   text: 'Finish report by tomorrow 5pm, high priority'
+///   text: 'Finish report by tomorrow 5pm, high priority',
+///   existingTags: ['work', 'urgent', 'project-x']
 /// });
 /// console.log(result.title, result.deadline, result.priority);
 /// ```
 #[tauri::command]
 pub async fn parse_text_input(
     text: String,
+    existing_tags: Option<Vec<String>>,
     state: State<'_, AiClientState>,
 ) -> Result<ParsedTask, String> {
     if text.trim().is_empty() {
@@ -68,7 +71,7 @@ pub async fn parse_text_input(
 
     let client = state.get_or_init().await?;
     client
-        .parse_text_input(&text)
+        .parse_text_input_with_tags(&text, existing_tags.as_deref())
         .await
         .map_err(|e| format!("Failed to parse text: {}", e))
 }
@@ -173,6 +176,7 @@ pub fn get_ai_provider() -> Result<String, String> {
 /// * `image_base64` - Base64-encoded image data (without data URI prefix)
 /// * `image_type` - MIME type of the image
 /// * `use_all_tools` - Whether to use all tools (true) or just basic create tool (false)
+/// * `existing_tags` - Optional list of existing tags from current tasks
 ///
 /// # Returns
 /// An `ImageParseResult` with extracted task operations
@@ -181,6 +185,7 @@ pub async fn parse_image_for_operations(
     image_base64: String,
     image_type: String,
     use_all_tools: bool,
+    existing_tags: Option<Vec<String>>,
     state: State<'_, AiClientState>,
 ) -> Result<ImageParseResult, String> {
     if image_base64.trim().is_empty() {
@@ -201,7 +206,7 @@ pub async fn parse_image_for_operations(
     };
 
     client
-        .parse_image_for_operations(&image_base64, &image_type, tool_set)
+        .parse_image_for_operations_with_tags(&image_base64, &image_type, tool_set, existing_tags.as_deref())
         .await
         .map_err(|e| format!("图片识别失败: {}", e))
 }

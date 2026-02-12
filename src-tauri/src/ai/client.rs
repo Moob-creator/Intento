@@ -128,11 +128,43 @@ impl AiClient {
     /// # }
     /// ```
     pub async fn parse_text_input(&self, text: &str) -> Result<ParsedTask> {
+        self.parse_text_input_with_tags(text, None).await
+    }
+
+    /// Parses natural language text into structured task information with existing tags context
+    ///
+    /// # Arguments
+    /// * `text` - Natural language description of the task
+    /// * `existing_tags` - Optional slice of existing tags to prefer when tagging
+    ///
+    /// # Returns
+    /// A `ParsedTask` struct with extracted information, preferring existing tags
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use intento::ai::AiClient;
+    /// # #[tokio::main]
+    /// # async fn main() -> anyhow::Result<()> {
+    /// let client = AiClient::new_default()?;
+    /// let existing_tags = vec!["work".to_string(), "urgent".to_string()];
+    /// let parsed = client.parse_text_input_with_tags(
+    ///     "Complete the quarterly report by Friday",
+    ///     Some(&existing_tags)
+    /// ).await?;
+    /// assert_eq!(parsed.tags, Some(vec!["work".to_string()]));
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn parse_text_input_with_tags(
+        &self,
+        text: &str,
+        existing_tags: Option<&[String]>,
+    ) -> Result<ParsedTask> {
         // Get current time in ISO8601 format
         let current_time = chrono::Utc::now().to_rfc3339();
 
-        // Build the prompt
-        let prompt = prompts::build_parse_task_prompt(text, &current_time);
+        // Build the prompt with tags context
+        let prompt = prompts::build_parse_task_prompt_with_tags(text, &current_time, existing_tags);
 
         // Create LLM request
         let content = Content::new("user").with_text(prompt);
@@ -503,6 +535,30 @@ impl AiClient {
         image_type: &str,
         tool_set: super::task_operations::ToolSet,
     ) -> Result<super::task_operations::ImageParseResult> {
+        self.parse_image_for_operations_with_tags(image_base64, image_type, tool_set, None)
+            .await
+    }
+
+    /// Parses image into task operations with existing tags context
+    ///
+    /// # Arguments
+    /// * `image_base64` - Base64-encoded image data
+    /// * `image_type` - MIME type of the image
+    /// * `tool_set` - Which set of tools to make available
+    /// * `existing_tags` - Optional slice of existing tags to prefer when tagging
+    ///
+    /// # Returns
+    /// An `ImageParseResult` with extracted operations, preferring existing tags
+    ///
+    /// # Errors
+    /// Returns error if API call fails or response cannot be parsed
+    pub async fn parse_image_for_operations_with_tags(
+        &self,
+        image_base64: &str,
+        image_type: &str,
+        tool_set: super::task_operations::ToolSet,
+        existing_tags: Option<&[String]>,
+    ) -> Result<super::task_operations::ImageParseResult> {
         use super::task_operations::{TaskToolRegistry, ToolCallParser, ImageParseResult};
 
         // Get current time for deadline inference
@@ -511,12 +567,30 @@ impl AiClient {
         // Get tools based on tool set
         let tools = TaskToolRegistry::get_tools(tool_set);
 
-        let prompt = format!(
+        // Build prompt with tags context
+        let base_prompt = format!(
             "当前时间: {}。请仔细分析这张图片，识别其中包含的任务、待办事项或日程信息。\
              如果图片中有任务相关内容，请调用相应的工具来创建或管理任务。\
              如果图片不包含任务相关信息，请不要调用任何工具。",
             current_time
         );
+
+        let tag_guidance = if let Some(tags) = existing_tags {
+            if tags.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "\n\n已有标签: [{}]\n\
+                     重要提示：为任务添加标签时，请优先使用已有标签。如果图片内容与某个已有标签明确相关，请使用该标签。\
+                     如果无法匹配已有标签或不确定，请使用 \"待分类\" 标签，方便用户后续手动分类。",
+                    tags.join(", ")
+                )
+            }
+        } else {
+            "\n\n提示：没有已有标签，请为不确定的任务使用 \"待分类\" 标签。".to_string()
+        };
+
+        let prompt = format!("{}{}", base_prompt, tag_guidance);
 
         // Construct image data URL
         let image_data_url = format!("data:{};base64,{}", image_type, image_base64);
