@@ -86,6 +86,11 @@ fn main() {
                             eprintln!("Failed to add daily summary job: {}", e);
                         }
 
+                        // Add automatic summary generation jobs (Phase 5.2)
+                        if let Err(e) = task_scheduler.add_auto_summary_jobs().await {
+                            eprintln!("Failed to add auto summary jobs: {}", e);
+                        }
+
                         // Start the scheduler
                         if let Err(e) = task_scheduler.start().await {
                             eprintln!("Failed to start scheduler: {}", e);

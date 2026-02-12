@@ -169,6 +169,138 @@ impl TaskScheduler {
         Ok(())
     }
 
+    /// Add automatic summary generation jobs
+    /// These jobs will generate summaries at scheduled times
+    pub async fn add_auto_summary_jobs(&self) -> Result<()> {
+        // Daily summaries - run at 1:00 AM every day
+        self.add_daily_auto_summary_job().await?;
+
+        // Weekly summaries - run at 2:00 AM every Monday
+        self.add_weekly_auto_summary_job().await?;
+
+        // Monthly summaries - run at 3:00 AM on the 1st of each month
+        self.add_monthly_auto_summary_job().await?;
+
+        // Semi-annual summaries - run at 4:00 AM on Jan 1 and Jul 1
+        self.add_semi_annual_auto_summary_job().await?;
+
+        // Yearly summaries - run at 5:00 AM on Jan 1
+        self.add_yearly_auto_summary_job().await?;
+
+        println!("✅ Added all automatic summary generation jobs");
+        Ok(())
+    }
+
+    /// Add daily auto summary job
+    async fn add_daily_auto_summary_job(&self) -> Result<()> {
+        let db = self.database.clone();
+
+        let job = Job::new_async("0 0 1 * * *", move |_uuid, _l| {
+            let db = db.clone();
+            Box::pin(async move {
+                println!("🔄 Running daily summary generation job...");
+                match crate::summary::scheduler_jobs::generate_daily_summaries(&db).await {
+                    Ok(()) => println!("✅ Daily summary generation completed successfully"),
+                    Err(e) => eprintln!("❌ Daily summary generation failed: {}", e),
+                }
+            })
+        })
+        .context("Failed to create daily summary job")?;
+
+        let scheduler = self.scheduler.lock().await;
+        scheduler.add(job).await.context("Failed to add daily summary job")?;
+        println!("Added daily auto summary job (runs at 1:00 AM daily)");
+        Ok(())
+    }
+
+    /// Add weekly auto summary job
+    async fn add_weekly_auto_summary_job(&self) -> Result<()> {
+        let db = self.database.clone();
+
+        let job = Job::new_async("0 0 2 * * MON", move |_uuid, _l| {
+            let db = db.clone();
+            Box::pin(async move {
+                println!("🔄 Running weekly summary generation job...");
+                match crate::summary::scheduler_jobs::generate_weekly_summaries(&db).await {
+                    Ok(()) => println!("✅ Weekly summary generation completed successfully"),
+                    Err(e) => eprintln!("❌ Weekly summary generation failed: {}", e),
+                }
+            })
+        })
+        .context("Failed to create weekly summary job")?;
+
+        let scheduler = self.scheduler.lock().await;
+        scheduler.add(job).await.context("Failed to add weekly summary job")?;
+        println!("Added weekly auto summary job (runs at 2:00 AM every Monday)");
+        Ok(())
+    }
+
+    /// Add monthly auto summary job
+    async fn add_monthly_auto_summary_job(&self) -> Result<()> {
+        let db = self.database.clone();
+
+        let job = Job::new_async("0 0 3 1 * *", move |_uuid, _l| {
+            let db = db.clone();
+            Box::pin(async move {
+                println!("🔄 Running monthly summary generation job...");
+                match crate::summary::scheduler_jobs::generate_monthly_summaries(&db).await {
+                    Ok(()) => println!("✅ Monthly summary generation completed successfully"),
+                    Err(e) => eprintln!("❌ Monthly summary generation failed: {}", e),
+                }
+            })
+        })
+        .context("Failed to create monthly summary job")?;
+
+        let scheduler = self.scheduler.lock().await;
+        scheduler.add(job).await.context("Failed to add monthly summary job")?;
+        println!("Added monthly auto summary job (runs at 3:00 AM on 1st of month)");
+        Ok(())
+    }
+
+    /// Add semi-annual auto summary job
+    async fn add_semi_annual_auto_summary_job(&self) -> Result<()> {
+        let db = self.database.clone();
+
+        let job = Job::new_async("0 0 4 1 1,7 *", move |_uuid, _l| {
+            let db = db.clone();
+            Box::pin(async move {
+                println!("🔄 Running semi-annual summary generation job...");
+                match crate::summary::scheduler_jobs::generate_semi_annual_summaries(&db).await {
+                    Ok(()) => println!("✅ Semi-annual summary generation completed successfully"),
+                    Err(e) => eprintln!("❌ Semi-annual summary generation failed: {}", e),
+                }
+            })
+        })
+        .context("Failed to create semi-annual summary job")?;
+
+        let scheduler = self.scheduler.lock().await;
+        scheduler.add(job).await.context("Failed to add semi-annual summary job")?;
+        println!("Added semi-annual auto summary job (runs at 4:00 AM on Jan 1 and Jul 1)");
+        Ok(())
+    }
+
+    /// Add yearly auto summary job
+    async fn add_yearly_auto_summary_job(&self) -> Result<()> {
+        let db = self.database.clone();
+
+        let job = Job::new_async("0 0 5 1 1 *", move |_uuid, _l| {
+            let db = db.clone();
+            Box::pin(async move {
+                println!("🔄 Running yearly summary generation job...");
+                match crate::summary::scheduler_jobs::generate_yearly_summaries(&db).await {
+                    Ok(()) => println!("✅ Yearly summary generation completed successfully"),
+                    Err(e) => eprintln!("❌ Yearly summary generation failed: {}", e),
+                }
+            })
+        })
+        .context("Failed to create yearly summary job")?;
+
+        let scheduler = self.scheduler.lock().await;
+        scheduler.add(job).await.context("Failed to add yearly summary job")?;
+        println!("Added yearly auto summary job (runs at 5:00 AM on Jan 1)");
+        Ok(())
+    }
+
     /// Add a custom cron job
     pub async fn add_custom_job<F>(&self, cron_expression: &str, job_fn: F) -> Result<()>
     where
