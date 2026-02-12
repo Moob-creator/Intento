@@ -723,45 +723,45 @@ function App() {
           />
 
           {/* Modal content */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 pointer-events-none">
-            <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl pointer-events-auto animate-scale-up">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <Sparkles size={22} className="text-amber-500" />
-                    <span className="text-base font-semibold text-neutral-dark">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-8 pointer-events-none">
+            <div className="w-full max-w-3xl bg-white rounded-3xl shadow-2xl pointer-events-auto animate-scale-up">
+              <div className="p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <Sparkles size={24} className="text-amber-500" />
+                    <span className="text-lg font-semibold text-neutral-dark">
                       {pastedImage ? '分析图片中的任务信息' : '描述任务或粘贴图片'}
                     </span>
                   </div>
                   <button
                     onClick={handleCloseTextInput}
-                    className="p-2 text-neutral-dark/40 hover:text-neutral-dark hover:bg-neutral-light/40 rounded-lg transition-all duration-200"
+                    className="p-2.5 text-neutral-dark/40 hover:text-neutral-dark hover:bg-neutral-light/40 rounded-xl transition-all duration-200"
                     aria-label="Close"
                   >
-                    <X size={20} />
+                    <X size={22} />
                   </button>
                 </div>
 
                 {parseError && (
-                  <div className="mb-4 p-3 rounded-lg bg-rose-50 border border-rose-200">
-                    <p className="text-sm text-rose-800">{parseError}</p>
+                  <div className="mb-5 p-4 rounded-xl bg-rose-50 border border-rose-200">
+                    <p className="text-sm text-rose-800 leading-relaxed">{parseError}</p>
                   </div>
                 )}
 
                 {/* Image preview */}
                 {pastedImage && (
-                  <div className="mb-4 relative">
+                  <div className="mb-5 relative">
                     <img
                       src={pastedImage}
                       alt="Pasted screenshot"
-                      className="w-full max-h-64 object-contain rounded-lg border-2 border-amber-200"
+                      className="w-full max-h-72 object-contain rounded-xl border-2 border-amber-200"
                     />
                     <button
                       onClick={handleRemoveImage}
-                      className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-white rounded-lg shadow-md transition-all duration-200"
+                      className="absolute top-3 right-3 p-2 bg-white/95 hover:bg-white rounded-xl shadow-md transition-all duration-200"
                       aria-label="Remove image"
                     >
-                      <X size={16} className="text-neutral-dark/60" />
+                      <X size={18} className="text-neutral-dark/60" />
                     </button>
                   </div>
                 )}
@@ -785,22 +785,22 @@ function App() {
                         ? '图片已粘贴，可添加补充说明...'
                         : '例如："周五前完成季度报告，高优先级，工作项目"\n\n或者粘贴/拖拽图片（⌘V 或拖拽文件）'
                     }
-                    rows={pastedImage ? 2 : 4}
+                    rows={pastedImage ? 3 : 5}
                     autoFocus
                     disabled={isParsing}
-                    className="flex-1 px-4 py-3 rounded-xl bg-amber-50/50 text-neutral-dark
-                             placeholder:text-neutral-dark/40 border-2 border-amber-100 resize-none
+                    className="flex-1 px-5 py-4 rounded-2xl bg-amber-50/50 text-neutral-dark
+                             placeholder:text-neutral-dark/40 placeholder:select-text border-2 border-amber-100 resize-none
                              focus:outline-none focus:border-amber-400/50 focus:bg-amber-50/80
-                             transition-all duration-200 text-base"
+                             transition-all duration-200 text-base leading-relaxed"
                   />
                   <button
                     onClick={handleParseText}
                     disabled={isParsing || (!textInput.trim() && !pastedImage)}
-                    className="self-end h-12 px-6 rounded-xl bg-gradient-to-r from-orange-400 to-rose-400
+                    className="self-end h-14 px-7 rounded-2xl bg-gradient-to-r from-orange-400 to-rose-400
                              text-white font-bold text-base transition-all duration-200
-                             hover:from-orange-500 hover:to-rose-500 hover:shadow-lg
-                             disabled:opacity-50 disabled:cursor-not-allowed
-                             flex items-center gap-2"
+                             hover:from-orange-500 hover:to-rose-500 hover:shadow-lg hover:scale-105
+                             disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
+                             flex items-center gap-2.5"
                   >
                     {isParsing ? (
                       <>
@@ -827,12 +827,12 @@ function App() {
                       </>
                     ) : (
                       <>
-                        <Send size={18} />
+                        <Send size={20} />
                       </>
                     )}
                   </button>
                 </div>
-                <p className="text-xs text-neutral-dark/60 mt-2">
+                <p className="text-sm text-neutral-dark/50 mt-3.5 leading-relaxed select-text">
                   {pastedImage
                     ? '点击发送分析图片 • 或添加文字补充'
                     : '⌘+Enter 提交 • ⌘+V 粘贴图片 • 拖拽图片到此处'}
