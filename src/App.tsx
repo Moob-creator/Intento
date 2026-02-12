@@ -213,8 +213,16 @@ function App() {
     setParseError(null);
     setTextInputVisible(false);
 
+    // Set timeout for API call (30 seconds)
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('请求超时，请检查网络连接后重试')), 30000);
+    });
+
     try {
-      const result = await invoke<ParsedTask>('parse_text_input', { text: trimmed });
+      const result = await Promise.race([
+        invoke<ParsedTask>('parse_text_input', { text: trimmed }),
+        timeoutPromise,
+      ]);
 
       // Convert ParsedTask to ImageParseResult format with a single Create operation
       const operationResult: ImageParseResult = {
@@ -240,9 +248,8 @@ function App() {
       setShowOperationsDialog(true);
     } catch (error) {
       console.error('Failed to parse text input:', error);
-      setParseError(
-        error instanceof Error ? error.message : 'Failed to parse your input. Please try again.'
-      );
+      const errorMessage = error instanceof Error ? error.message : 'Failed to parse your input. Please try again.';
+      setParseError(errorMessage);
       setTextInputVisible(true);
     } finally {
       setIsParsing(false);
@@ -260,6 +267,11 @@ function App() {
     setParseError(null);
     setTextInputVisible(false);
 
+    // Set timeout for API call (30 seconds)
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('图片分析超时，请检查网络连接后重试')), 30000);
+    });
+
     try {
       // Extract base64 data from data URI
       const base64Data = pastedImage.split(',')[1];
@@ -270,12 +282,15 @@ function App() {
         dataUriPrefix: pastedImage.substring(0, 50),
       });
 
-      // Use new parse_image_for_operations command
-      const result = await invoke<ImageParseResult>('parse_image_for_operations', {
-        imageBase64: base64Data,
-        imageType: imageType,
-        useAllTools: true, // Enable all operations (create, update, complete, delete, etc.)
-      });
+      // Use new parse_image_for_operations command with timeout
+      const result = await Promise.race([
+        invoke<ImageParseResult>('parse_image_for_operations', {
+          imageBase64: base64Data,
+          imageType: imageType,
+          useAllTools: true, // Enable all operations (create, update, complete, delete, etc.)
+        }),
+        timeoutPromise,
+      ]);
 
       console.log('Image parse result:', result);
 
@@ -900,6 +915,7 @@ function App() {
                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                           />
                         </svg>
+                        <span>正在分析...</span>
                       </>
                     ) : (
                       <>
