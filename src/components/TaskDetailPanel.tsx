@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { Trash2, Calendar, X, Hash } from 'lucide-react';
+import { Trash2, Calendar, X, Hash, Circle, Loader2, CheckCircle2 } from 'lucide-react';
 import { DateTimePicker } from './DateTimePicker';
+import { CustomSelect, type SelectOption } from './CustomSelect';
 import type { Task, TaskStatus, TaskPriority } from '../types/task';
 
 interface TaskDetailPanelProps {
@@ -23,6 +24,44 @@ export function TaskDetailPanel({ task, onSave, onDelete, onCancel }: TaskDetail
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const dateTimePickerRef = useRef<HTMLDivElement>(null);
+
+  // Status options with icons
+  const statusOptions: SelectOption[] = [
+    {
+      value: 'todo',
+      label: 'To Do',
+      icon: <Circle size={18} className="text-neutral-dark/60" />,
+    },
+    {
+      value: 'doing',
+      label: 'Doing',
+      icon: <Loader2 size={18} className="text-blue-500" />,
+    },
+    {
+      value: 'done',
+      label: 'Done',
+      icon: <CheckCircle2 size={18} className="text-green-500" />,
+    },
+  ];
+
+  // Priority options with colors
+  const priorityOptions: SelectOption[] = [
+    {
+      value: 'low',
+      label: 'Low',
+      icon: <div className="w-2 h-2 rounded-full bg-blue-400" />,
+    },
+    {
+      value: 'medium',
+      label: 'Medium',
+      icon: <div className="w-2 h-2 rounded-full bg-amber-400" />,
+    },
+    {
+      value: 'high',
+      label: 'High',
+      icon: <div className="w-2 h-2 rounded-full bg-rose-400" />,
+    },
+  ];
 
   // Update form when task changes
   useEffect(() => {
@@ -162,44 +201,20 @@ export function TaskDetailPanel({ task, onSave, onDelete, onCancel }: TaskDetail
         </div>
 
         {/* Status */}
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="task-status" className="text-sm font-medium text-neutral-dark/60">
-            Status
-          </label>
-          <select
-            id="task-status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value as TaskStatus)}
-            className="w-full px-1 py-2
-                     text-neutral-dark border-none bg-transparent
-                     focus:outline-none
-                     transition-all duration-200 cursor-pointer"
-          >
-            <option value="todo">To Do</option>
-            <option value="doing">Doing</option>
-            <option value="done">Done</option>
-          </select>
-        </div>
+        <CustomSelect
+          label="Status"
+          value={status}
+          options={statusOptions}
+          onChange={(value) => setStatus(value as TaskStatus)}
+        />
 
         {/* Priority */}
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="task-priority" className="text-sm font-medium text-neutral-dark/60">
-            Priority
-          </label>
-          <select
-            id="task-priority"
-            value={priority}
-            onChange={(e) => setPriority(e.target.value as TaskPriority)}
-            className="w-full px-1 py-2
-                     text-neutral-dark border-none bg-transparent
-                     focus:outline-none
-                     transition-all duration-200 cursor-pointer"
-          >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
-        </div>
+        <CustomSelect
+          label="Priority"
+          value={priority}
+          options={priorityOptions}
+          onChange={(value) => setPriority(value as TaskPriority)}
+        />
 
         {/* Due Date & Time */}
         <div className="flex flex-col gap-1.5">
