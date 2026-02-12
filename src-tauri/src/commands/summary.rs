@@ -90,14 +90,18 @@ pub async fn list_summaries(
     offset: Option<usize>,
     db: State<'_, Database>,
 ) -> Result<Vec<Summary>, String> {
-    let summary_type = summary_type
+    let summary_type_parsed = summary_type
         .map(|s| SummaryType::from_str(&s))
         .transpose()
         .map_err(|e| format!("Invalid summary type: {}", e))?;
 
-    // TODO: Implement db.list_summaries method
-    // For now, return empty list
-    Ok(vec![])
+    db.list_summaries(
+        tag.as_deref(),
+        summary_type_parsed.as_ref(),
+        limit,
+        offset,
+    )
+    .map_err(|e| format!("Failed to list summaries: {}", e))
 }
 
 /// Get a single summary by ID
@@ -116,8 +120,8 @@ pub async fn delete_summary(
     id: i64,
     db: State<'_, Database>,
 ) -> Result<(), String> {
-    // TODO: Implement db.delete_summary method
-    Err("Not implemented yet".to_string())
+    db.delete_summary(id)
+        .map_err(|e| format!("Failed to delete summary: {}", e))
 }
 
 /// Export summary to markdown or text format

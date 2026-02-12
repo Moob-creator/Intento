@@ -468,6 +468,99 @@ impl Database {
         Ok(summary)
     }
 
+    /// List summaries with optional filters
+    /// Returns summaries sorted by created_at DESC
+    pub fn list_summaries(
+        &self,
+        tag: Option<&str>,
+        summary_type: Option<&SummaryType>,
+        limit: Option<usize>,
+        offset: Option<usize>,
+    ) -> Result<Vec<Summary>> {
+        let conn = self.conn.lock().unwrap();
+
+        // Build dynamic query
+        let mut sql = String::from(
+            "SELECT id, summary_type, period_start, period_end, tag, tag_filter,
+             content, statistics, task_ids, created_at, is_deleted
+             FROM summaries WHERE is_deleted = 0"
+        );
+
+        let mut params: Vec<Box<dyn rusqlite::ToSql>> = vec![];
+
+        // Add tag filter
+        if let Some(t) = tag {
+            sql.push_str(" AND tag = ?");
+            params.push(Box::new(t.to_string()));
+        }
+
+        // Add summary_type filter
+        if let Some(st) = summary_type {
+            sql.push_str(" AND summary_type = ?");
+            params.push(Box::new(st.as_str().to_string()));
+        }
+
+        // Add ordering
+        sql.push_str(" ORDER BY created_at DESC");
+
+        // Add limit and offset
+        if let Some(lim) = limit {
+            sql.push_str(" LIMIT ?");
+            params.push(Box::new(lim as i64));
+        }
+        if let Some(off) = offset {
+            sql.push_str(" OFFSET ?");
+            params.push(Box::new(off as i64));
+        }
+
+        let mut stmt = conn.prepare(&sql).context("Failed to prepare list_summaries statement")?;
+
+        let param_refs: Vec<&dyn rusqlite::ToSql> = params.iter().map(|p| p.as_ref()).collect();
+
+        let summaries = stmt
+            .query_map(param_refs.as_slice(), |row| {
+                let task_ids_json: Option<String> = row.get(8)?;
+                let task_ids = task_ids_json.and_then(|s| serde_json::from_str(&s).ok());
+
+                let tag_filter_json: Option<String> = row.get(5)?;
+                let tag_filter = tag_filter_json.and_then(|s| serde_json::from_str(&s).ok());
+
+                let summary_type_str: String = row.get(1)?;
+
+                Ok(Summary {
+                    id: Some(row.get(0)?),
+                    summary_type: SummaryType::from_str(&summary_type_str).unwrap(),
+                    period_start: row.get(2)?,
+                    period_end: row.get(3)?,
+                    tag: row.get(4)?,
+                    tag_filter,
+                    content: row.get(6)?,
+                    statistics: row.get(7)?,
+                    task_ids,
+                    created_at: row.get(9)?,
+                    is_deleted: row.get::<_, i32>(10)? != 0,
+                })
+            })
+            .context("Failed to query summaries list")?
+            .collect::<Result<Vec<_>, _>>()
+            .context("Failed to collect summaries")?;
+
+        Ok(summaries)
+    }
+
+    /// Delete summary (soft delete)
+    pub fn delete_summary(&self, id: i64) -> Result<()> {
+        let conn = self.conn.lock().unwrap();
+
+        conn.execute(
+            "UPDATE summaries SET is_deleted = 1 WHERE id = ?1",
+            [id],
+        )
+        .context("Failed to soft delete summary")?;
+
+        Ok(())
+    }
+
     // ========================================
     // Context cache operations
     // ========================================
@@ -623,6 +716,62 @@ mod tests {
         // Delete
         db.delete_task(task_id).unwrap();
         let retrieved = db.get_task(task_id).unwrap();
+        assert!(retrieved.is_none());
+
+        // Clean up
+        std::fs::remove_file(db_path).ok();
+    }
+
+    #[test]
+    fn test_summary_crud() {
+        let temp_dir = std::env::temp_dir();
+        let db_path = temp_dir.join("intento_test_summary.db");
+
+        let db = Database::new(db_path.clone()).unwrap();
+
+        // Create
+        let summary = Summary::new(
+            SummaryType::Daily,
+            1707667200, // 2024-02-12 00:00:00
+            1707753599, // 2024-02-12 23:59:59
+            Some("test_tag".to_string()),
+            "# Daily Summary\n\nTest content".to_string(),
+            None,
+            vec![],
+        );
+        let summary_id = db.create_summary(&summary).unwrap();
+        assert!(summary_id > 0);
+
+        // Read
+        let retrieved = db.get_summary(summary_id).unwrap();
+        assert!(retrieved.is_some());
+        let retrieved = retrieved.unwrap();
+        assert_eq!(retrieved.summary_type, SummaryType::Daily);
+        assert_eq!(retrieved.tag, Some("test_tag".to_string()));
+
+        // List - should find the summary
+        let list = db.list_summaries(None, None, None, None).unwrap();
+        assert_eq!(list.len(), 1);
+
+        // List with tag filter
+        let list = db.list_summaries(Some("test_tag"), None, None, None).unwrap();
+        assert_eq!(list.len(), 1);
+
+        // List with non-matching tag
+        let list = db.list_summaries(Some("other_tag"), None, None, None).unwrap();
+        assert_eq!(list.len(), 0);
+
+        // List with summary_type filter
+        let list = db.list_summaries(None, Some(&SummaryType::Daily), None, None).unwrap();
+        assert_eq!(list.len(), 1);
+
+        // List with limit
+        let list = db.list_summaries(None, None, Some(1), None).unwrap();
+        assert_eq!(list.len(), 1);
+
+        // Delete
+        db.delete_summary(summary_id).unwrap();
+        let retrieved = db.get_summary(summary_id).unwrap();
         assert!(retrieved.is_none());
 
         // Clean up
