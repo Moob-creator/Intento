@@ -6,6 +6,7 @@ mod commands;
 mod db;
 mod scheduler;
 mod summary;  // ✨ Phase 5: Summary module
+mod window;   // macOS window customization
 
 use tauri::Manager;
 
@@ -53,6 +54,11 @@ fn main() {
             commands::settings::update_auto_summary_settings,
         ])
         .setup(|app| {
+            // ✨ 设置 macOS 交通灯位置
+            if let Some(main_window) = app.get_webview_window("main") {
+                window::setup_traffic_light_position(&main_window);
+            }
+
             // Initialize database
             let app_data_dir = app
                 .path()

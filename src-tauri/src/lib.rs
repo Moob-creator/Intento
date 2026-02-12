@@ -6,3 +6,4 @@ pub mod commands;
 pub mod db;
 pub mod scheduler;
 pub mod summary;  // ✨ Phase 5: Summary generation module
+pub mod window;   // macOS window customization

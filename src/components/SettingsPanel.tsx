@@ -1,6 +1,7 @@
 import { X, Settings as SettingsIcon, Bell, Palette, Keyboard, Info, FileText } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { CustomSelect } from './CustomSelect';
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -247,12 +248,16 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
             </div>
             <div className="space-y-3 pl-7">
               <div className="p-3 bg-neutral-light/30 rounded-lg">
-                <label className="block text-sm text-neutral-dark mb-2">Theme</label>
-                <select className="w-full px-3 py-2 bg-white border border-neutral-light rounded-lg text-neutral-dark focus:outline-none focus:ring-2 focus:ring-primary/50">
-                  <option>Light (Warm)</option>
-                  <option>Dark (Coming Soon)</option>
-                  <option>Auto</option>
-                </select>
+                <CustomSelect
+                  label="Theme"
+                  value="light"
+                  options={[
+                    { value: 'light', label: 'Light (Warm)' },
+                    { value: 'dark', label: 'Dark (Coming Soon)' },
+                    { value: 'auto', label: 'Auto' },
+                  ]}
+                  onChange={() => {}}
+                />
               </div>
               <label className="flex items-center justify-between p-3 bg-neutral-light/30 rounded-lg cursor-pointer hover:bg-neutral-light/50 transition-all duration-200">
                 <span className="text-sm text-neutral-dark">Compact mode</span>

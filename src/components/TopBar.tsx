@@ -13,7 +13,8 @@ export function TopBar({ onSearchClick, onAIClick, onSettingsClick, onSidebarTog
   return (
     <header
       data-tauri-drag-region
-      className="h-14 flex items-center justify-between px-6 pl-20 border-b border-neutral-light/60 bg-white/80 backdrop-blur-sm"
+      className="h-14 flex items-center justify-between pr-6 border-b border-neutral-light/60 bg-white/80 backdrop-blur-sm"
+      style={{ paddingLeft: '76px' }}
     >
       {/* Left - Sidebar toggle button */}
       <button
