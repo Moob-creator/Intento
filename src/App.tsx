@@ -215,8 +215,29 @@ function App() {
 
     try {
       const result = await invoke<ParsedTask>('parse_text_input', { text: trimmed });
-      setParsedTask(result);
-      setShowConfirmDialog(true);
+
+      // Convert ParsedTask to ImageParseResult format with a single Create operation
+      const operationResult: ImageParseResult = {
+        operations: [
+          {
+            type: 'Create',
+            data: {
+              title: result.title,
+              description: result.description,
+              priority: result.priority,
+              deadline: result.deadline,
+              tags: result.tags,
+            },
+          },
+        ],
+        confidence: 0.95, // High confidence for text input
+        image_description: `AI 解析文本: "${trimmed.substring(0, 50)}${trimmed.length > 50 ? '...' : ''}"`,
+        warnings: [],
+      };
+
+      // Use the operations dialog instead of the old confirm dialog
+      setImageParseResult(operationResult);
+      setShowOperationsDialog(true);
     } catch (error) {
       console.error('Failed to parse text input:', error);
       setParseError(

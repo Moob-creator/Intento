@@ -131,7 +131,7 @@ export function TaskOperationsConfirmDialog({
                     {parseResult.image_description}
                   </p>
                 )}
-                {parseResult.confidence > 0 && (
+                {parseResult.confidence > 0 && parseResult.confidence < 1 && (
                   <p className="text-xs text-neutral-dark/40 mt-1">
                     识别置信度: {(parseResult.confidence * 100).toFixed(0)}%
                   </p>
