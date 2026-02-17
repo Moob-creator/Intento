@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Calendar, CheckCircle2, Clock, TrendingUp, Zap } from 'lucide-react';
 import { useTaskStore } from '../store/taskStore';
+import { formatDeadline } from '../utils/dateFormat';
 
 interface TaskStats {
   total: number;
@@ -77,17 +78,6 @@ export function HomePage() {
       .sort((a, b) => (b.completed_at || 0) - (a.completed_at || 0))
       .slice(0, 5);
   }, [tasks]);
-
-  const formatDeadline = (timestamp: number) => {
-    const date = new Date(timestamp * 1000);
-    const now = new Date();
-    const diffTime = date.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Tomorrow';
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
 
   const formatRelativeTime = (timestamp: number) => {
     const date = new Date(timestamp * 1000);

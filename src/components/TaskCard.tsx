@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Clock, Check, Edit2, Trash2, X } from 'lucide-react';
 import type { Task } from '../types/task';
+import { formatDeadline } from '../utils/dateFormat';
 
 interface TaskCardProps {
   task: Task;
@@ -27,19 +28,6 @@ export function TaskCard({
     todo: { label: 'To Do', color: 'text-gray-700 bg-gray-100' },
     doing: { label: 'Doing', color: 'text-blue-700 bg-blue-100' },
     done: { label: 'Done', color: 'text-green-700 bg-green-100' },
-  };
-
-  const formatDeadline = (timestamp: number) => {
-    const date = new Date(timestamp * 1000);
-    const now = new Date();
-    const diffTime = date.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) return 'Overdue';
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Tomorrow';
-    if (diffDays <= 7) return `In ${diffDays} days`;
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   const handleStatusToggle = (e: React.MouseEvent) => {
