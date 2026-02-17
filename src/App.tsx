@@ -141,6 +141,8 @@ function App() {
         tags: updates.tags,
       } as Omit<Task, 'id' | 'created_at' | 'updated_at'>);
     }
+    // Close the detail panel after saving
+    selectTask(null);
   };
 
   // Handle status change from card

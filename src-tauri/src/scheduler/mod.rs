@@ -63,14 +63,14 @@ impl TaskScheduler {
         Ok(())
     }
 
-    /// Add a job to check for expiring tasks every hour
+    /// Add a job to check for expiring tasks every 15 minutes
     /// This job will query tasks that will expire within 24 hours
     pub async fn add_deadline_reminder_job(&self) -> Result<()> {
         let db = self.database.clone();
         let app_handle = self.app_handle.clone();
 
-        // Run every hour at minute 0
-        let job = Job::new_async("0 0 * * * *", move |_uuid, _l| {
+        // Run every 15 minutes
+        let job = Job::new_async("0 */15 * * * *", move |_uuid, _l| {
             let db = db.clone();
             let app_handle = app_handle.clone();
 
@@ -128,7 +128,7 @@ impl TaskScheduler {
             .await
             .context("Failed to add deadline reminder job")?;
 
-        println!("Added deadline reminder job (runs hourly)");
+        println!("Added deadline reminder job (runs every 15 minutes)");
         Ok(())
     }
 

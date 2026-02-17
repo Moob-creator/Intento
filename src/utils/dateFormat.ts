@@ -5,7 +5,7 @@
 /**
  * Format a deadline timestamp as a relative time string
  * @param timestamp - Unix timestamp in seconds
- * @returns Relative time string (e.g., "Today", "Tomorrow", "In 2 days", "Overdue")
+ * @returns Relative time string (e.g., "Today 16:30", "Tomorrow", "In 2 days", "Overdue")
  */
 export function formatDeadline(timestamp: number, includeOverdue: boolean = true): string {
   const deadlineDate = new Date(timestamp * 1000);
@@ -26,8 +26,13 @@ export function formatDeadline(timestamp: number, includeOverdue: boolean = true
   const diffTime = deadlineMidnight.getTime() - todayMidnight.getTime();
   const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
+  // Format time as HH:MM
+  const hours = deadlineDate.getHours().toString().padStart(2, '0');
+  const minutes = deadlineDate.getMinutes().toString().padStart(2, '0');
+  const timeStr = `${hours}:${minutes}`;
+
   if (diffDays < 0 && includeOverdue) return 'Overdue';
-  if (diffDays === 0) return 'Today';
+  if (diffDays === 0) return `Today ${timeStr}`;
   if (diffDays === 1) return 'Tomorrow';
   if (diffDays <= 7) return `In ${diffDays} days`;
   return deadlineDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
