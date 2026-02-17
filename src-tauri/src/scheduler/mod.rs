@@ -63,29 +63,29 @@ impl TaskScheduler {
         Ok(())
     }
 
-    /// Add a job to check for expiring tasks every 15 minutes
-    /// This job will query tasks that will expire within 24 hours
+    /// Add a job to check for tasks needing reminders every 5 minutes
+    /// This job uses the reminder_time field for accurate notifications
     pub async fn add_deadline_reminder_job(&self) -> Result<()> {
         let db = self.database.clone();
         let app_handle = self.app_handle.clone();
 
-        // Run every 15 minutes
-        let job = Job::new_async("0 */15 * * * *", move |_uuid, _l| {
+        // Run every 5 minutes for better accuracy
+        let job = Job::new_async("0 */5 * * * *", move |_uuid, _l| {
             let db = db.clone();
             let app_handle = app_handle.clone();
 
             Box::pin(async move {
-                println!("Running deadline reminder check...");
+                println!("Running reminder check...");
 
-                // Check for tasks expiring in the next 24 hours
-                match db.get_expiring_tasks(24 * 60 * 60) {
+                // Check tasks based on reminder_time
+                match db.get_tasks_needing_reminder() {
                     Ok(tasks) => {
                         if tasks.is_empty() {
-                            println!("No tasks expiring in the next 24 hours");
+                            println!("No tasks need reminders at this time");
                             return;
                         }
 
-                        println!("Found {} task(s) expiring within 24 hours", tasks.len());
+                        println!("Found {} task(s) needing reminders", tasks.len());
 
                         for task in tasks {
                             let deadline_str = if let Some(deadline) = task.deadline {
@@ -96,7 +96,7 @@ impl TaskScheduler {
                                 "Unknown".to_string()
                             };
 
-                            let title = format!("Task Deadline Reminder: {}", task.title);
+                            let title = format!("⏰ Task Reminder: {}", task.title);
                             let body = format!(
                                 "Deadline: {}\nPriority: {:?}",
                                 deadline_str, task.priority
@@ -109,13 +109,20 @@ impl TaskScheduler {
                                 &body,
                                 NotificationType::Deadline,
                             ) {
-                                eprintln!("Failed to send notification for task {}: {}",
+                                eprintln!("Failed to send reminder for task {}: {}",
                                     task.id.unwrap_or(0), e);
+                            } else {
+                                // Clear reminder_time to avoid duplicate notifications
+                                if let Some(task_id) = task.id {
+                                    if let Err(e) = db.clear_reminder(task_id) {
+                                        eprintln!("Failed to clear reminder for task {}: {}", task_id, e);
+                                    }
+                                }
                             }
                         }
                     }
                     Err(e) => {
-                        eprintln!("Failed to query expiring tasks: {}", e);
+                        eprintln!("Failed to query tasks needing reminders: {}", e);
                     }
                 }
             })
@@ -128,7 +135,7 @@ impl TaskScheduler {
             .await
             .context("Failed to add deadline reminder job")?;
 
-        println!("Added deadline reminder job (runs every 15 minutes)");
+        println!("Added deadline reminder job (runs every 5 minutes)");
         Ok(())
     }
 

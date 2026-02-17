@@ -342,6 +342,77 @@ impl Database {
         Ok(tasks)
     }
 
+    /// Get tasks that need reminders now (based on reminder_time)
+    /// This method provides more accurate notifications by checking reminder_time
+    /// instead of just checking if deadline is within a window
+    pub fn get_tasks_needing_reminder(&self) -> Result<Vec<Task>> {
+        let conn = self.conn.lock().unwrap();
+        let now = chrono::Utc::now().timestamp();
+
+        // Query tasks where:
+        // 1. reminder_time is set and has passed (within last 5 minutes to avoid missing)
+        // 2. Task is not completed or deleted
+        let mut stmt = conn
+            .prepare(
+                "SELECT id, title, description, status, priority, deadline, created_at,
+                 updated_at, completed_at, context, tags, attachments, reminder_time, is_deleted
+                 FROM tasks
+                 WHERE is_deleted = 0
+                 AND status != 'done'
+                 AND reminder_time IS NOT NULL
+                 AND reminder_time <= ?1
+                 AND reminder_time > ?2
+                 ORDER BY reminder_time ASC",
+            )
+            .context("Failed to prepare reminder tasks query")?;
+
+        let tasks = stmt
+            .query_map([now, now - 300], |row| {
+                // 5 minutes tolerance window
+                let tags_json: Option<String> = row.get(10)?;
+                let tags = tags_json.and_then(|s| serde_json::from_str(&s).ok());
+
+                let attachments_json: Option<String> = row.get(11)?;
+                let attachments = attachments_json.and_then(|s| serde_json::from_str(&s).ok());
+
+                let status_str: String = row.get(3)?;
+                let priority_str: String = row.get(4)?;
+
+                Ok(Task {
+                    id: Some(row.get(0)?),
+                    title: row.get(1)?,
+                    description: row.get(2)?,
+                    status: TaskStatus::from_str(&status_str).unwrap(),
+                    priority: Priority::from_str(&priority_str).unwrap(),
+                    deadline: row.get(5)?,
+                    created_at: row.get(6)?,
+                    updated_at: row.get(7)?,
+                    completed_at: row.get(8)?,
+                    context: row.get(9)?,
+                    tags,
+                    attachments,
+                    reminder_time: row.get(12)?,
+                    is_deleted: row.get(13)?,
+                })
+            })
+            .context("Failed to execute reminder tasks query")?
+            .collect::<std::result::Result<Vec<Task>, _>>()
+            .context("Failed to collect reminder tasks")?;
+
+        Ok(tasks)
+    }
+
+    /// Clear reminder_time after notification is sent to avoid duplicate notifications
+    pub fn clear_reminder(&self, task_id: i64) -> Result<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "UPDATE tasks SET reminder_time = NULL WHERE id = ?1",
+            [task_id],
+        )
+        .context("Failed to clear reminder time")?;
+        Ok(())
+    }
+
     // ========================================
     // Summary operations
     // ========================================

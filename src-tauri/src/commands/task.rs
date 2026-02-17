@@ -20,6 +20,22 @@ pub async fn create_task(
         task.priority = Priority::from_str(&p).map_err(|e| e.to_string())?;
     }
 
+    // Automatically set reminder_time to 1 hour before deadline
+    if let Some(deadline_ts) = deadline {
+        // Set reminder to 1 hour (3600 seconds) before deadline
+        // If deadline is less than 1 hour away, set reminder to 5 minutes before
+        let now = chrono::Utc::now().timestamp();
+        let time_until_deadline = deadline_ts - now;
+
+        task.reminder_time = if time_until_deadline > 3600 {
+            Some(deadline_ts - 3600)  // 1 hour before
+        } else if time_until_deadline > 300 {
+            Some(deadline_ts - 300)   // 5 minutes before
+        } else {
+            Some(now + 60)            // 1 minute from now if deadline is very soon
+        };
+    }
+
     db.create_task(&task).map_err(|e| e.to_string())
 }
 
@@ -67,6 +83,18 @@ pub async fn update_task(
     }
     if let Some(d) = deadline {
         task.deadline = Some(d);
+
+        // Update reminder_time when deadline changes
+        let now = chrono::Utc::now().timestamp();
+        let time_until_deadline = d - now;
+
+        task.reminder_time = if time_until_deadline > 3600 {
+            Some(d - 3600)  // 1 hour before
+        } else if time_until_deadline > 300 {
+            Some(d - 300)   // 5 minutes before
+        } else {
+            Some(now + 60)  // 1 minute from now if deadline is very soon
+        };
     }
     if let Some(t) = tags {
         task.tags = Some(t);
