@@ -18,6 +18,18 @@
 
 ## [0.1.0] - 2026-02-19
 
+### 🎉 首个 MVP 版本正式发布
+
+**发布包:**
+- macOS (Apple Silicon): `Intento_0.1.0_aarch64.dmg` (8.5 MB)
+- 安装包位置: `src-tauri/target/release/bundle/`
+
+### 📦 构建信息
+- 前端构建时间: 1.7 秒
+- Rust 编译时间: 2 分 56 秒
+- 应用大小: 22 MB (解压后)
+- DMG 大小: 8.5 MB
+
 ### 🎉 首个 MVP 版本发布
 
 这是 Intento 的首个可用版本，包含了核心的任务管理和 AI 功能。

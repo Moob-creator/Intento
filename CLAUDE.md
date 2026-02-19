@@ -216,16 +216,106 @@ Use `commands::ai::ai_health_check()` to verify API connectivity without consumi
 - Use `--target x86_64-pc-windows-msvc` for builds
 - Notification permissions handled by Tauri automatically
 
+## Documentation Organization
+
+### Documentation Structure
+
+All project documentation is organized in the `docs/` directory with the following structure:
+
+```
+docs/
+├── README.md                        # Documentation index and navigation
+├── CHANGELOG.md                     # Version history and updates
+├── ROADMAP.md                       # Product roadmap and future plans
+│
+├── specs/                           # Product and technical specifications
+│   ├── prd-v3.md                   # Product requirements document
+│   ├── development-plan.md         # Development phases and tasks
+│   ├── database-schema.md          # Database design
+│   ├── tech-stack.md               # Technology stack decisions
+│   └── frontend-reference.md       # Frontend architecture
+│
+├── user-guide/                      # User documentation
+│   ├── README.md                   # Complete user guide
+│   └── features/                   # Feature-specific guides
+│       ├── image-parsing.md
+│       └── notifications.md
+│
+├── progress/                        # ⭐ Current development tracking
+│   ├── PROGRESS_REPORT.md          # Detailed progress analysis
+│   └── NEXT_TASKS.md               # Prioritized task list
+│
+└── archive/                         # Historical documentation
+    ├── TODO.md                     # Old task list (archived)
+    ├── progress/                   # Old progress reports
+    ├── technical/                  # Old technical docs
+    └── phase5/                     # Phase-specific archives
+```
+
+### Documentation Guidelines
+
+**When to Create/Update Documentation:**
+
+1. **Progress Reports** → `docs/progress/`
+   - Create when: Major milestone completed, quarterly review
+   - Update: `PROGRESS_REPORT.md` with current status
+   - Include: PRD coverage, code stats, next steps
+
+2. **Task Planning** → `docs/progress/`
+   - Create when: Planning next development phase
+   - Update: `NEXT_TASKS.md` with prioritized tasks
+   - Include: P0/P1/P2 tasks, time estimates, acceptance criteria
+
+3. **Technical Specs** → `docs/specs/`
+   - Create when: Designing new architecture/feature
+   - Files: `database-schema.md`, `tech-stack.md`, etc.
+   - Keep: Only active/current specifications
+
+4. **User Guides** → `docs/user-guide/`
+   - Create when: New user-facing feature released
+   - Update: After any UI/UX changes
+   - Keep: Always current with latest version
+
+5. **Archive** → `docs/archive/`
+   - Move here: Completed phase docs, old progress reports
+   - Never delete: Keep for historical reference
+   - Organize by: Phase or category
+
+**Documentation Best Practices:**
+
+- ✅ Use clear, concise language
+- ✅ Include code examples and screenshots
+- ✅ Keep documents focused (one topic per file)
+- ✅ Update dates and version numbers
+- ✅ Cross-reference related documents
+- ❌ Don't create duplicate documentation
+- ❌ Don't mix current and historical docs
+- ❌ Don't leave TODO sections indefinitely
+
+**File Naming Convention:**
+- Progress: `PROGRESS_REPORT.md`, `NEXT_TASKS.md`
+- Specs: `lowercase-with-dashes.md`
+- User docs: `lowercase-with-dashes.md`
+- Archives: Keep original names with context
+
 ## Project Status (2026-02-19)
 
 **Completed Phases:**
+- Phase 0: Project initialization ✅
 - Phase 1: Database and backend infrastructure ✅
 - Phase 2: Basic task management CRUD ✅
 - Phase 3: AI text/image parsing ✅
 - Phase 4: Notification system ✅
 - Phase 5: Summary generation (daily/weekly/monthly) ✅
 
+**Current Status:** MVP (v0.1.0) Complete - 100%
+
+**Next Steps (P0 - Must Complete):**
+1. Context caching mechanism (PRD 4.2) - 1-2 days
+2. Quarterly/yearly summaries (PRD 4.6.3/4.6.4) - 1-2 days
+
+See `docs/progress/NEXT_TASKS.md` for detailed task breakdown.
+
 **Current Development:**
-- UI refinements and user experience improvements
-- Advanced filtering and search capabilities
-- Notification settings customization
+- Completing PRD v3 remaining features
+- Preparing for v0.2.0 release

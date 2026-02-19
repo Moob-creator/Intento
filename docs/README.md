@@ -32,6 +32,18 @@
 - **[产品路线图](./ROADMAP.md)** - 未来功能和版本规划
 - **[更新日志](./CHANGELOG.md)** - 版本历史和更新记录
 
+### 📊 开发进度
+**位置:** `progress/`
+
+- **[进度报告](./progress/PROGRESS_REPORT.md)** - 详细的开发进度分析
+  - PRD v3 功能覆盖率
+  - 代码统计和技术债务
+  - 项目健康度评估
+- **[下一步任务](./progress/NEXT_TASKS.md)** - 优先级任务清单
+  - P0/P1/P2 任务分级
+  - 详细的技术方案
+  - 时间估算和验收标准
+
 ### 📦 历史文档
 **位置:** `archive/`
 
@@ -79,6 +91,10 @@ docs/
 │   ├── database-schema.md          # 数据库设计
 │   ├── tech-stack.md               # 技术选型
 │   └── frontend-reference.md       # 前端参考
+│
+├── progress/                        # 开发进度追踪
+│   ├── PROGRESS_REPORT.md          # 进度报告
+│   └── NEXT_TASKS.md               # 下一步任务
 │
 └── archive/                         # 历史文档归档
     ├── prd-v1.md                   # 旧版 PRD
