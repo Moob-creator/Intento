@@ -52,6 +52,8 @@ fn main() {
             // ✨ Phase 5.3: Settings commands
             commands::settings::get_auto_summary_settings,
             commands::settings::update_auto_summary_settings,
+            commands::settings::get_notification_settings,
+            commands::settings::update_notification_settings,
         ])
         .setup(|app| {
             // ✨ 设置 macOS 交通灯位置

@@ -1,7 +1,8 @@
-import { X, Settings as SettingsIcon, Bell, Palette, Keyboard, Info, FileText } from 'lucide-react';
+import { X, Settings as SettingsIcon, Palette, Keyboard, Info, FileText } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { CustomSelect } from './CustomSelect';
+import { NotificationSettings } from './NotificationSettings';
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -199,42 +200,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
           </div>
 
           {/* Notifications */}
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <Bell size={20} className="text-primary" />
-              <h3 className="text-base font-semibold text-neutral-dark">Notifications</h3>
-            </div>
-            <div className="space-y-3 pl-7">
-              <label className="flex items-center justify-between p-3 bg-neutral-light/30 rounded-lg cursor-pointer hover:bg-neutral-light/50 transition-all duration-200">
-                <span className="text-sm text-neutral-dark">Enable desktop notifications</span>
-                <input
-                  type="checkbox"
-                  defaultChecked
-                  className="w-5 h-5 text-primary rounded focus:ring-2 focus:ring-primary/50"
-                />
-              </label>
-              <label className="flex items-center justify-between p-3 bg-neutral-light/30 rounded-lg cursor-pointer hover:bg-neutral-light/50 transition-all duration-200">
-                <span className="text-sm text-neutral-dark">Remind me of deadlines</span>
-                <input
-                  type="checkbox"
-                  defaultChecked
-                  className="w-5 h-5 text-primary rounded focus:ring-2 focus:ring-primary/50"
-                />
-              </label>
-              <div className="p-3 bg-neutral-light/30 rounded-lg">
-                <label className="block text-sm text-neutral-dark mb-2">
-                  Remind me before (hours)
-                </label>
-                <input
-                  type="number"
-                  defaultValue={24}
-                  min={1}
-                  max={168}
-                  className="w-full px-3 py-2 bg-white border border-neutral-light rounded-lg text-neutral-dark focus:outline-none focus:ring-2 focus:ring-primary/50"
-                />
-              </div>
-            </div>
-          </div>
+          <NotificationSettings className="mb-6" />
 
           {/* Appearance */}
           <div className="mb-6">

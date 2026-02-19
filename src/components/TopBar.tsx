@@ -1,4 +1,4 @@
-import { Search, Sparkles, Settings, PanelLeftClose, PanelLeft, FileText, List, Calendar } from 'lucide-react';
+import { Search, Sparkles, Settings, PanelLeftClose, PanelLeft, FileText, List, Calendar, Filter } from 'lucide-react';
 
 type ViewMode = 'list' | 'calendar';
 
@@ -8,9 +8,11 @@ interface TopBarProps {
   onSettingsClick: () => void;
   onSidebarToggle: () => void;
   onSummaryClick?: () => void;  // ✨ Phase 5
+  onFilterClick?: () => void;
   sidebarCollapsed: boolean;
   viewMode?: ViewMode;
   onViewModeChange?: (mode: ViewMode) => void;
+  filterCount?: number;
 }
 
 export function TopBar({
@@ -19,9 +21,11 @@ export function TopBar({
   onSettingsClick,
   onSidebarToggle,
   onSummaryClick,
+  onFilterClick,
   sidebarCollapsed,
   viewMode = 'list',
   onViewModeChange,
+  filterCount = 0,
 }: TopBarProps) {
   return (
     <header
@@ -104,6 +108,22 @@ export function TopBar({
             title="View Summaries (⌘R)"
           >
             <FileText size={20} className="group-hover:scale-110 transition-transform duration-200" />
+          </button>
+        )}
+        {/* Filter button */}
+        {onFilterClick && (
+          <button
+            onClick={onFilterClick}
+            className="relative p-2.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-all duration-200 group"
+            aria-label="Advanced Filters"
+            title="Advanced Filters (⌘F)"
+          >
+            <Filter size={20} className="group-hover:scale-110 transition-transform duration-200" />
+            {filterCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-primary text-white text-xs font-bold rounded-full flex items-center justify-center shadow-md">
+                {filterCount}
+              </span>
+            )}
           </button>
         )}
         <button

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Sparkles, Send, X } from 'lucide-react';
+import { Sparkles, Send, X, Filter } from 'lucide-react';
 import { useTaskStore } from './store/taskStore';
 import { TopBar } from './components/TopBar';
 import { Sidebar } from './components/Sidebar';
@@ -12,12 +12,26 @@ import { CommandPalette } from './components/CommandPalette';
 import { StatisticsPanel } from './components/StatisticsPanel';
 import { SettingsPanel } from './components/SettingsPanel';
 import { SummaryPanel } from './components/SummaryPanel';  // ✨ Phase 5
+import { AdvancedFilterPanel } from './components/AdvancedFilterPanel';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { invoke } from '@tauri-apps/api/core';
-import type { Task, TaskStatus, ParsedTask, ImageParseResult, TaskOperation } from './types/task';
+import type { Task, TaskStatus, TaskPriority, ParsedTask, ImageParseResult, TaskOperation } from './types/task';
 import './App.css';
 
 type ViewMode = 'list' | 'calendar';
+
+interface FilterOptions {
+  status: TaskStatus | 'all';
+  priorities: TaskPriority[];
+  tags: string[];
+  deadlineRange: {
+    start: number | null;
+    end: number | null;
+  };
+  searchQuery: string;
+  showOverdueOnly: boolean;
+  showCompletedToday: boolean;
+}
 
 function App() {
   const {
@@ -38,6 +52,7 @@ function App() {
   const [statisticsPanelOpen, setStatisticsPanelOpen] = useState(false);
   const [settingsPanelOpen, setSettingsPanelOpen] = useState(false);
   const [summaryPanelOpen, setSummaryPanelOpen] = useState(false);  // ✨ Phase 5
+  const [filterPanelOpen, setFilterPanelOpen] = useState(false);
   const [initialViewMode, setInitialViewMode] = useState<'current' | 'history'>('current');  // ✨ Phase 5.4
 
   // View mode state
@@ -48,6 +63,17 @@ function App() {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [timeFilter, setTimeFilter] = useState<'today' | 'due-soon' | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Advanced filter state
+  const [advancedFilters, setAdvancedFilters] = useState<FilterOptions>({
+    status: 'all',
+    priorities: [],
+    tags: [],
+    deadlineRange: { start: null, end: null },
+    searchQuery: '',
+    showOverdueOnly: false,
+    showCompletedToday: false,
+  });
 
   // AI text input state
   const [textInput, setTextInput] = useState('');
@@ -98,11 +124,22 @@ function App() {
       handler: () => setSummaryPanelOpen((prev) => !prev),  // ✨ Phase 5: ⌘R for Summary
     },
     {
+      key: 'f',
+      metaKey: true,
+      handler: () => setFilterPanelOpen((prev) => !prev),
+    },
+    {
+      key: 'r',
+      metaKey: true,
+      handler: () => setSummaryPanelOpen((prev) => !prev),  // ✨ Phase 5: ⌘R for Summary
+    },
+    {
       key: 'Escape',
       handler: () => {
         setCommandPaletteOpen(false);
         setStatisticsPanelOpen(false);
         setSettingsPanelOpen(false);
+        setFilterPanelOpen(false);
         if (textInputVisible) {
           handleCloseTextInput();
         } else if (selectedTask) {
@@ -611,48 +648,96 @@ function App() {
     }
   };
 
-  // Sort tasks: High priority first, then by status, then by creation date
+  // Apply advanced filters and sort tasks
   const sortedTasks = useMemo(() => {
-    // Apply filters
     let filtered = tasks;
+    const now = Date.now() / 1000;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStart = today.getTime() / 1000;
 
-    // Filter by time
+    // Search query filter
+    if (advancedFilters.searchQuery.trim()) {
+      const query = advancedFilters.searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (task) =>
+          task.title.toLowerCase().includes(query) ||
+          task.description?.toLowerCase().includes(query)
+      );
+    }
+
+    // Quick filters
+    if (advancedFilters.showOverdueOnly) {
+      filtered = filtered.filter(
+        (task) => task.deadline && task.deadline < now && task.status !== 'done'
+      );
+    }
+
+    if (advancedFilters.showCompletedToday) {
+      filtered = filtered.filter(
+        (task) => task.status === 'done' && task.completed_at && task.completed_at >= todayStart
+      );
+    }
+
+    // Status filter (legacy support + advanced)
+    const effectiveStatus = advancedFilters.status !== 'all' ? advancedFilters.status : statusFilter;
+    if (effectiveStatus !== 'all') {
+      filtered = filtered.filter((task) => task.status === effectiveStatus);
+    }
+
+    // Priority filter
+    if (advancedFilters.priorities.length > 0) {
+      filtered = filtered.filter((task) => advancedFilters.priorities.includes(task.priority));
+    }
+
+    // Tags filter (legacy support + advanced)
+    const effectiveTags = advancedFilters.tags.length > 0 ? advancedFilters.tags : selectedTag ? [selectedTag] : [];
+    if (effectiveTags.length > 0) {
+      filtered = filtered.filter((task) =>
+        effectiveTags.some((tag) => task.tags?.includes(tag))
+      );
+    }
+
+    // Deadline range filter
+    if (advancedFilters.deadlineRange.start) {
+      filtered = filtered.filter(
+        (task) => task.deadline && task.deadline >= advancedFilters.deadlineRange.start!
+      );
+    }
+    if (advancedFilters.deadlineRange.end) {
+      filtered = filtered.filter(
+        (task) => task.deadline && task.deadline <= advancedFilters.deadlineRange.end!
+      );
+    }
+
+    // Legacy time filter
     if (timeFilter) {
-      const now = new Date();
-      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() / 1000;
-      const endOfToday = startOfToday + 86400; // 24 * 60 * 60
+      const startOfToday = today.getTime() / 1000;
+      const endOfToday = startOfToday + 86400;
 
       if (timeFilter === 'today') {
-        filtered = filtered.filter(task =>
-          task.status !== 'done' &&
-          task.deadline != null &&
-          task.deadline >= startOfToday &&
-          task.deadline < endOfToday
+        filtered = filtered.filter(
+          (task) =>
+            task.status !== 'done' &&
+            task.deadline != null &&
+            task.deadline >= startOfToday &&
+            task.deadline < endOfToday
         );
       } else if (timeFilter === 'due-soon') {
         const endOfThreeDays = startOfToday + 86400 * 3;
-        filtered = filtered.filter(task =>
-          task.status !== 'done' &&
-          task.deadline != null &&
-          task.deadline >= startOfToday &&
-          task.deadline < endOfThreeDays
+        filtered = filtered.filter(
+          (task) =>
+            task.status !== 'done' &&
+            task.deadline != null &&
+            task.deadline >= startOfToday &&
+            task.deadline < endOfThreeDays
         );
       }
     }
 
-    // Filter by status
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(task => task.status === statusFilter);
-    }
-
-    // Filter by tag
-    if (selectedTag) {
-      filtered = filtered.filter(task => task.tags?.includes(selectedTag));
-    }
-
     return [...filtered].sort((a, b) => {
       // When time filter is active, sort by deadline first
-      if (timeFilter) {
+      if (timeFilter || advancedFilters.deadlineRange.start || advancedFilters.deadlineRange.end) {
         const aDeadline = a.deadline ?? Infinity;
         const bDeadline = b.deadline ?? Infinity;
         if (aDeadline !== bDeadline) return aDeadline - bDeadline;
@@ -673,7 +758,34 @@ function App() {
       // Creation date: newest first
       return b.created_at - a.created_at;
     });
-  }, [tasks, statusFilter, selectedTag, timeFilter]);
+  }, [tasks, statusFilter, selectedTag, timeFilter, advancedFilters]);
+
+  // Handle applying advanced filters
+  const handleApplyFilters = (filters: FilterOptions) => {
+    setAdvancedFilters(filters);
+    // Sync with legacy filters for sidebar compatibility
+    if (filters.status !== 'all') {
+      setStatusFilter(filters.status);
+    }
+    if (filters.tags.length === 1) {
+      setSelectedTag(filters.tags[0]);
+    } else if (filters.tags.length === 0) {
+      setSelectedTag(null);
+    }
+  };
+
+  // Get active filter count for badge
+  const getActiveFilterCount = () => {
+    let count = 0;
+    if (advancedFilters.status !== 'all') count++;
+    if (advancedFilters.priorities.length > 0) count += advancedFilters.priorities.length;
+    if (advancedFilters.tags.length > 0) count += advancedFilters.tags.length;
+    if (advancedFilters.deadlineRange.start || advancedFilters.deadlineRange.end) count++;
+    if (advancedFilters.showOverdueOnly) count++;
+    if (advancedFilters.showCompletedToday) count++;
+    if (advancedFilters.searchQuery.trim()) count++;
+    return count;
+  };
 
   return (
     <div className="relative flex flex-col h-screen w-full bg-background overflow-hidden">
@@ -683,10 +795,12 @@ function App() {
         onAIClick={handleOpenTextInput}
         onSettingsClick={() => setSettingsPanelOpen(true)}
         onSummaryClick={() => setSummaryPanelOpen(true)}  // ✨ Phase 5
+        onFilterClick={() => setFilterPanelOpen(true)}
         onSidebarToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
         sidebarCollapsed={sidebarCollapsed}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        filterCount={getActiveFilterCount()}
       />
 
       {/* Main content */}
@@ -730,6 +844,10 @@ function App() {
                     "Today's Tasks"
                   ) : timeFilter === 'due-soon' ? (
                     'Due Soon'
+                  ) : advancedFilters.showOverdueOnly ? (
+                    'Overdue Tasks'
+                  ) : advancedFilters.showCompletedToday ? (
+                    'Completed Today'
                   ) : (
                     <>
                       {statusFilter === 'all' && 'All Tasks'}
@@ -739,10 +857,17 @@ function App() {
                     </>
                   )}
                 </h2>
-                <p className="text-sm text-neutral-dark/60 mt-1">
-                  {sortedTasks.length} {sortedTasks.length === 1 ? 'task' : 'tasks'}
-                  {selectedTag && ` • ${selectedTag}`}
-                </p>
+                <div className="flex items-center gap-3 mt-1">
+                  <p className="text-sm text-neutral-dark/60">
+                    {sortedTasks.length} {sortedTasks.length === 1 ? 'task' : 'tasks'}
+                  </p>
+                  {getActiveFilterCount() > 0 && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold">
+                      <Filter size={12} />
+                      {getActiveFilterCount()} {getActiveFilterCount() === 1 ? 'filter' : 'filters'} active
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Quick filter buttons */}
@@ -1035,6 +1160,15 @@ function App() {
         }}
         selectedTag={selectedTag}
         initialViewMode={initialViewMode}
+      />
+
+      {/* Advanced Filter Panel */}
+      <AdvancedFilterPanel
+        isOpen={filterPanelOpen}
+        onClose={() => setFilterPanelOpen(false)}
+        tasks={tasks}
+        currentFilters={advancedFilters}
+        onApplyFilters={handleApplyFilters}
       />
     </div>
   );

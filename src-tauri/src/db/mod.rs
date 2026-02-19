@@ -91,6 +91,14 @@ impl Database {
             println!("✓ Applied migration v4: Add settings table");
         }
 
+        // Migration v5: Add notification settings
+        if version < 5 {
+            let migration_v5 = include_str!("../../migrations/v5_add_notification_settings.sql");
+            conn.execute_batch(migration_v5)
+                .context("Failed to execute v5 migration")?;
+            println!("✓ Applied migration v5: Add notification settings");
+        }
+
         Ok(())
     }
 
@@ -248,6 +256,53 @@ impl Database {
         }
 
         sql.push_str(" ORDER BY created_at DESC");
+
+        let mut stmt = conn.prepare(&sql).context("Failed to prepare statement")?;
+
+        let tasks = stmt
+            .query_map([], |row| {
+                let tags_json: Option<String> = row.get(10)?;
+                let tags = tags_json.and_then(|s| serde_json::from_str(&s).ok());
+
+                let attachments_json: Option<String> = row.get(11)?;
+                let attachments = attachments_json.and_then(|s| serde_json::from_str(&s).ok());
+
+                let status_str: String = row.get(3)?;
+                let priority_str: String = row.get(4)?;
+
+                Ok(Task {
+                    id: Some(row.get(0)?),
+                    title: row.get(1)?,
+                    description: row.get(2)?,
+                    status: TaskStatus::from_str(&status_str).unwrap(),
+                    priority: Priority::from_str(&priority_str).unwrap(),
+                    deadline: row.get(5)?,
+                    created_at: row.get(6)?,
+                    updated_at: row.get(7)?,
+                    completed_at: row.get(8)?,
+                    context: row.get(9)?,
+                    tags,
+                    attachments,
+                    reminder_time: row.get(12)?,
+                    is_deleted: row.get::<_, i32>(13)? != 0,
+                })
+            })
+            .context("Failed to query tasks")?
+            .collect::<Result<Vec<_>, _>>()
+            .context("Failed to collect tasks")?;
+
+        Ok(tasks)
+    }
+
+    /// List all tasks including deleted ones (for export)
+    pub fn list_all_tasks(&self) -> Result<Vec<Task>> {
+        let conn = self.conn.lock().unwrap();
+
+        let sql = String::from(
+            "SELECT id, title, description, status, priority, deadline, created_at,
+             updated_at, completed_at, context, tags, attachments, reminder_time, is_deleted
+             FROM tasks ORDER BY created_at DESC",
+        );
 
         let mut stmt = conn.prepare(&sql).context("Failed to prepare statement")?;
 
@@ -809,7 +864,7 @@ mod tests {
 
         let db = Database::new(db_path.clone()).unwrap();
         let version = db.get_version().unwrap();
-        assert_eq!(version, 3);
+        assert_eq!(version, 5);
 
         // Clean up
         std::fs::remove_file(db_path).ok();
