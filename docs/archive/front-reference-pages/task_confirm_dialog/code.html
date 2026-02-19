@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Task Confirm Dialog</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#197fe6",
+              "background-light": "#f6f7f8",
+              "background-dark": "#111921",
+            },
+            fontFamily: {
+              "display": ["Manrope", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="font-display">
+<div class="relative flex min-h-screen w-full flex-col items-center justify-center bg-background-light dark:bg-background-dark group/design-root overflow-x-hidden p-4 sm:p-6 md:p-8" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCFuq3po-kSZbEgkqoUn-iQigX9MFE8C3REZF7iDSVDlVRkbIL74meqc5kAgfN5vcZMdwKEy3cvOsme6o5iQcxeGr7ZN4SYK0nPTxTsBgX9h0aqZZuXJDH73SSHBxx7TruJV98E0Z9wBrLaxxBJt2I2T4IubUHKii2Zi8VBOlwcUuswzjCejSeVKm9B7fUpwxjMGELMduas0h_mW8arEEe8EHXlfPCBQxd3C-ZkU39yQc8SnFJSXBhVQahN1nFhDw0kVreamTEyo-mu');">
+<!-- Modal Container -->
+<div class="w-full max-w-2xl rounded-xl bg-white dark:bg-background-dark shadow-2xl dark:border dark:border-gray-700">
+<div class="flex flex-col p-6 sm:p-8">
+<!-- PageHeading -->
+<div class="flex flex-wrap justify-between gap-3 pb-4">
+<div class="flex flex-col gap-1">
+<p class="text-[#111418] dark:text-gray-100 tracking-light text-[32px] font-bold leading-tight">Add Task</p>
+<p class="text-[#637588] dark:text-gray-400 text-sm font-normal leading-normal">Confirm the details for your new task below.</p>
+</div>
+</div>
+<!-- Form Fields -->
+<div class="flex flex-col gap-4">
+<!-- Task Title -->
+<label class="flex flex-col w-full">
+<p class="text-[#111418] dark:text-gray-200 text-base font-medium leading-normal pb-2">Task Title*</p>
+<input autofocus="" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111418] dark:text-gray-100 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-[#dce0e5] dark:border-gray-600 bg-white dark:bg-gray-800/50 focus:border-primary h-14 placeholder:text-[#637588] dark:placeholder:text-gray-500 p-[15px] text-base font-normal leading-normal" value="Finalize Q3 marketing report presentation"/>
+</label>
+<!-- Description -->
+<label class="flex flex-col w-full">
+<p class="text-[#111418] dark:text-gray-200 text-base font-medium leading-normal pb-2">Description (optional)</p>
+<textarea class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111418] dark:text-gray-100 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-[#dce0e5] dark:border-gray-600 bg-white dark:bg-gray-800/50 focus:border-primary min-h-36 placeholder:text-[#637588] dark:placeholder:text-gray-500 p-[15px] text-base font-normal leading-normal" placeholder="Add more details..."></textarea>
+</label>
+<!-- Due Date & Status -->
+<div class="flex flex-col sm:flex-row w-full items-end gap-4">
+<label class="flex flex-col min-w-40 flex-1 relative">
+<p class="text-[#111418] dark:text-gray-200 text-base font-medium leading-normal pb-2">Due Date</p>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111418] dark:text-gray-100 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-[#dce0e5] dark:border-gray-600 bg-white dark:bg-gray-800/50 focus:border-primary h-14 placeholder:text-[#637588] dark:placeholder:text-gray-500 p-[15px] text-base font-normal leading-normal" placeholder="Select date" value="Tomorrow, 5:00 PM"/>
+<span class="material-symbols-outlined absolute right-4 top-[52px] text-gray-400 dark:text-gray-500 pointer-events-none">calendar_today</span>
+</label>
+<label class="flex flex-col min-w-40 flex-1 relative">
+<p class="text-[#111418] dark:text-gray-200 text-base font-medium leading-normal pb-2">Status</p>
+<select class="form-select appearance-none flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111418] dark:text-gray-100 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-[#dce0e5] dark:border-gray-600 bg-white dark:bg-gray-800/50 focus:border-primary h-14 placeholder:text-[#637588] dark:placeholder:text-gray-500 p-[15px] text-base font-normal leading-normal">
+<option>To Do</option>
+<option>In Progress</option>
+<option>Done</option>
+</select>
+<span class="material-symbols-outlined absolute right-4 top-[52px] text-gray-400 dark:text-gray-500 pointer-events-none">expand_more</span>
+</label>
+</div>
+</div>
+<!-- Related Tasks Section -->
+<div class="mt-8">
+<h3 class="text-[#111418] dark:text-gray-100 text-lg font-bold leading-tight tracking-[-0.015em] pb-3">Possibly Related Tasks</h3>
+<div class="flex flex-col gap-2">
+<a class="group flex items-center gap-3 rounded-lg p-3 hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-gray-500 dark:text-gray-400 group-hover:text-primary dark:group-hover:text-primary">link</span>
+<span class="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary dark:group-hover:text-primary">Q3 Marketing Strategy Document</span>
+</a>
+<a class="group flex items-center gap-3 rounded-lg p-3 hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-gray-500 dark:text-gray-400 group-hover:text-primary dark:group-hover:text-primary">link</span>
+<span class="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary dark:group-hover:text-primary">Review Sales Figures for Q3</span>
+</a>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex flex-col sm:flex-row-reverse gap-3 pt-8 mt-4 border-t border-gray-200 dark:border-gray-700">
+<button class="flex items-center justify-center w-full sm:w-auto rounded-lg bg-primary h-12 px-6 text-base font-bold text-white hover:bg-primary/90 transition-colors duration-200">
+                        Add Task
+                    </button>
+<button class="flex items-center justify-center w-full sm:w-auto rounded-lg bg-gray-100 dark:bg-gray-700 h-12 px-6 text-base font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200">
+                        Later / Ignore
+                    </button>
+</div>
+</div>
+</div>
+</div>
+</body></html>
