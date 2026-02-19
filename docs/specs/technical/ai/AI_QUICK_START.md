@@ -153,14 +153,14 @@ console.log(task);
 
 ## 下一步
 
-- 📖 阅读 [完整文档](./AI_MODULE_GUIDE.md)
+- 📖 阅读 [完整文档](AI_MODULE_GUIDE.md)
 - 🔍 查看 [示例代码](../src-tauri/src/ai/examples.rs)
 - 🚀 开始 [前端集成](./TASK_3_2_FRONTEND_INTEGRATION.md) (即将到来)
 
 ## 获取帮助
 
 如果遇到问题：
-1. 查看 [故障排除](./AI_MODULE_GUIDE.md#troubleshooting)
+1. 查看 [故障排除](AI_MODULE_GUIDE.md#troubleshooting)
 2. 检查 [常见错误](./TASK_3_1_COMPLETION_REPORT.md#troubleshooting)
 3. 提交 Issue
 

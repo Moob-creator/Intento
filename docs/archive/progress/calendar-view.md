@@ -539,7 +539,7 @@ const handleExportICS = () => {
 
 - [Phase 5 进度文档](../src-tauri/docs/phase5/PROGRESS.md)
 - [开发待办清单](./TODO.md)
-- [开发计划](../specs/development-plan.md)
+- [开发计划](../../specs/development-plan.md)
 - [设计规范](../specs/ui-ux-design.md)
 
 ---
