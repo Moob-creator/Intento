@@ -79,8 +79,8 @@ export function TopBar({
                   ? 'bg-white text-neutral-dark shadow-sm'
                   : 'text-neutral-dark/40 hover:text-neutral-dark/60'
               }`}
-              aria-label="List view"
-              title="List view"
+              aria-label="列表视图"
+              title="列表视图"
             >
               <List size={18} />
             </button>
@@ -91,8 +91,8 @@ export function TopBar({
                   ? 'bg-white text-neutral-dark shadow-sm'
                   : 'text-neutral-dark/40 hover:text-neutral-dark/60'
               }`}
-              aria-label="Calendar view"
-              title="Calendar view"
+              aria-label="日历视图"
+              title="日历视图"
             >
               <Calendar size={18} />
             </button>
@@ -104,8 +104,8 @@ export function TopBar({
           <button
             onClick={onSummaryClick}
             className="p-2.5 text-purple-500 hover:bg-purple-50 rounded-lg transition-all duration-200 group"
-            aria-label="Summaries"
-            title="View Summaries (⌘R)"
+            aria-label="摘要"
+            title="查看摘要 (⌘R)"
           >
             <FileText size={20} className="group-hover:scale-110 transition-transform duration-200" />
           </button>
@@ -115,8 +115,8 @@ export function TopBar({
           <button
             onClick={onFilterClick}
             className="relative p-2.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-all duration-200 group"
-            aria-label="Advanced Filters"
-            title="Advanced Filters (⌘F)"
+            aria-label="高级过滤"
+            title="高级过滤 (⌘F)"
           >
             <Filter size={20} className="group-hover:scale-110 transition-transform duration-200" />
             {filterCount > 0 && (
@@ -129,16 +129,16 @@ export function TopBar({
         <button
           onClick={onAIClick}
           className="p-2.5 text-amber-500 hover:bg-amber-50 rounded-lg transition-all duration-200 group"
-          aria-label="AI Add Task"
-          title="AI Add Task (⌘/)"
+          aria-label="AI 添加任务"
+          title="AI 添加任务 (⌘/)"
         >
           <Sparkles size={20} className="group-hover:scale-110 transition-transform duration-200" />
         </button>
         <button
           onClick={onSettingsClick}
           className="p-2.5 text-neutral-dark/40 hover:text-neutral-dark hover:bg-neutral-light/40 rounded-lg transition-all duration-200"
-          aria-label="Settings"
-          title="Settings (⌘,)"
+          aria-label="设置"
+          title="设置 (⌘,)"
         >
           <Settings size={20} />
         </button>
