@@ -1,4 +1,5 @@
 import { Search, Sparkles, Settings, PanelLeftClose, PanelLeft, FileText, List, Calendar, Filter } from 'lucide-react';
+import { Tooltip } from './Tooltip';
 
 type ViewMode = 'list' | 'calendar';
 
@@ -72,76 +73,82 @@ export function TopBar({
         {/* View mode toggle */}
         {onViewModeChange && (
           <div className="flex items-center gap-1 bg-neutral-light/30 rounded-lg p-1">
-            <button
-              onClick={() => onViewModeChange('list')}
-              className={`p-2 rounded-md transition-all duration-200 ${
-                viewMode === 'list'
-                  ? 'bg-white text-neutral-dark shadow-sm'
-                  : 'text-neutral-dark/40 hover:text-neutral-dark/60'
-              }`}
-              aria-label="列表视图"
-              title="列表视图"
-            >
-              <List size={18} />
-            </button>
-            <button
-              onClick={() => onViewModeChange('calendar')}
-              className={`p-2 rounded-md transition-all duration-200 ${
-                viewMode === 'calendar'
-                  ? 'bg-white text-neutral-dark shadow-sm'
-                  : 'text-neutral-dark/40 hover:text-neutral-dark/60'
-              }`}
-              aria-label="日历视图"
-              title="日历视图"
-            >
-              <Calendar size={18} />
-            </button>
+            <Tooltip content="列表视图">
+              <button
+                onClick={() => onViewModeChange('list')}
+                className={`p-2 rounded-md transition-all duration-200 ${
+                  viewMode === 'list'
+                    ? 'bg-white text-neutral-dark shadow-sm'
+                    : 'text-neutral-dark/40 hover:text-neutral-dark/60'
+                }`}
+                aria-label="列表视图"
+              >
+                <List size={18} />
+              </button>
+            </Tooltip>
+            <Tooltip content="日历视图">
+              <button
+                onClick={() => onViewModeChange('calendar')}
+                className={`p-2 rounded-md transition-all duration-200 ${
+                  viewMode === 'calendar'
+                    ? 'bg-white text-neutral-dark shadow-sm'
+                    : 'text-neutral-dark/40 hover:text-neutral-dark/60'
+                }`}
+                aria-label="日历视图"
+              >
+                <Calendar size={18} />
+              </button>
+            </Tooltip>
           </div>
         )}
 
         {/* ✨ Phase 5: Summary button */}
         {onSummaryClick && (
-          <button
-            onClick={onSummaryClick}
-            className="p-2.5 text-purple-500 hover:bg-purple-50 rounded-lg transition-all duration-200 group"
-            aria-label="摘要"
-            title="查看摘要 (⌘R)"
-          >
-            <FileText size={20} className="group-hover:scale-110 transition-transform duration-200" />
-          </button>
+          <Tooltip content="查看摘要 (⌘R)">
+            <button
+              onClick={onSummaryClick}
+              className="p-2.5 text-purple-500 hover:bg-purple-50 rounded-lg transition-all duration-200 group"
+              aria-label="摘要"
+            >
+              <FileText size={20} className="group-hover:scale-110 transition-transform duration-200" />
+            </button>
+          </Tooltip>
         )}
         {/* Filter button */}
         {onFilterClick && (
-          <button
-            onClick={onFilterClick}
-            className="relative p-2.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-all duration-200 group"
-            aria-label="高级过滤"
-            title="高级过滤 (⌘F)"
-          >
-            <Filter size={20} className="group-hover:scale-110 transition-transform duration-200" />
-            {filterCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-primary text-white text-xs font-bold rounded-full flex items-center justify-center shadow-md">
-                {filterCount}
-              </span>
-            )}
-          </button>
+          <Tooltip content="高级过滤 (⌘F)">
+            <button
+              onClick={onFilterClick}
+              className="relative p-2.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-all duration-200 group"
+              aria-label="高级过滤"
+            >
+              <Filter size={20} className="group-hover:scale-110 transition-transform duration-200" />
+              {filterCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-primary text-white text-xs font-bold rounded-full flex items-center justify-center shadow-md">
+                  {filterCount}
+                </span>
+              )}
+            </button>
+          </Tooltip>
         )}
-        <button
-          onClick={onAIClick}
-          className="p-2.5 text-amber-500 hover:bg-amber-50 rounded-lg transition-all duration-200 group"
-          aria-label="AI 添加任务"
-          title="AI 添加任务 (⌘/)"
-        >
-          <Sparkles size={20} className="group-hover:scale-110 transition-transform duration-200" />
-        </button>
-        <button
-          onClick={onSettingsClick}
-          className="p-2.5 text-neutral-dark/40 hover:text-neutral-dark hover:bg-neutral-light/40 rounded-lg transition-all duration-200"
-          aria-label="设置"
-          title="设置 (⌘,)"
-        >
-          <Settings size={20} />
-        </button>
+        <Tooltip content="AI (⌘/)">
+          <button
+            onClick={onAIClick}
+            className="p-2.5 text-amber-500 hover:bg-amber-50 rounded-lg transition-all duration-200 group"
+            aria-label="AI"
+          >
+            <Sparkles size={20} className="group-hover:scale-110 transition-transform duration-200" />
+          </button>
+        </Tooltip>
+        <Tooltip content="设置 (⌘,)">
+          <button
+            onClick={onSettingsClick}
+            className="p-2.5 text-neutral-dark/40 hover:text-neutral-dark hover:bg-neutral-light/40 rounded-lg transition-all duration-200"
+            aria-label="设置"
+          >
+            <Settings size={20} />
+          </button>
+        </Tooltip>
       </div>
     </header>
   );
