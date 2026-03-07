@@ -8,7 +8,7 @@ mod scheduler;
 mod summary;  // ✨ Phase 5: Summary module
 mod window;   // macOS window customization
 
-use tauri::Manager;
+use tauri::{Manager, WindowEvent};
 
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -186,6 +186,21 @@ fn main() {
 
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .on_window_event(|window, event| {
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                window.hide().ok();
+            }
+        })
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app_handle, event| {
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen { .. } = event {
+                if let Some(window) = app_handle.get_webview_window("main") {
+                    window.show().ok();
+                    window.set_focus().ok();
+                }
+            }
+        });
 }
