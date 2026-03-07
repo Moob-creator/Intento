@@ -31,7 +31,12 @@ export function formatDeadline(timestamp: number, includeOverdue: boolean = true
   const minutes = deadlineDate.getMinutes().toString().padStart(2, '0');
   const timeStr = `${hours}:${minutes}`;
 
-  if (diffDays < 0 && includeOverdue) return 'Overdue';
+  // Check if overdue (past date OR today but past the specific time)
+  if (includeOverdue) {
+    if (diffDays < 0) return 'Overdue';
+    if (diffDays === 0 && deadlineDate.getTime() < now.getTime()) return 'Overdue';
+  }
+
   if (diffDays === 0) return `Today ${timeStr}`;
   if (diffDays === 1) return 'Tomorrow';
   if (diffDays <= 7) return `In ${diffDays} days`;

@@ -1,8 +1,7 @@
 ---
-name: "OPSX: Continue"
-description: Continue working on a change - create the next artifact (Experimental)
-category: Workflow
-tags: [workflow, artifacts, experimental]
+name: OPSX: Continue
+description: "Continue working on a change - create the next artifact (Experimental)"
+argument-hint: "[command arguments]"
 ---
 
 Continue working on a change by creating the next artifact.

@@ -53,8 +53,7 @@ export function CalendarView({ tasks, onTaskClick, selectedTag }: CalendarViewPr
     today.setHours(0, 0, 0, 0);
 
     for (let i = 0; i < 42; i++) {
-      const date = new Date(startDate);
-      date.setDate(startDate.getDate() + i);
+      const date = new Date(startDate.getTime() + i * 86400 * 1000);
 
       const dayStart = Math.floor(date.getTime() / 1000);
       const dayEnd = dayStart + 86400 - 1;
@@ -203,19 +202,37 @@ function DayCell({ cell, onTaskClick }: DayCellProps) {
   const mediumPriorityCount = tasks.filter(t => t.priority === 'medium').length;
   const lowPriorityCount = tasks.filter(t => t.priority === 'low').length;
 
-  // Check for overdue tasks
-  const now = Math.floor(Date.now() / 1000);
-  const hasOverdue = tasks.some(t => t.deadline && t.deadline < now && t.status !== 'done');
+  // Check for overdue tasks - only relevant for today and future dates
+  // Past dates should just show their tasks without "overdue" styling
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayStartTimestamp = Math.floor(todayStart.getTime() / 1000);
+
+  const cellDateStart = new Date(date);
+  cellDateStart.setHours(0, 0, 0, 0);
+  const cellDateTimestamp = Math.floor(cellDateStart.getTime() / 1000);
+
+  // Only mark as overdue if:
+  // 1. This cell is today or future (cellDate >= today)
+  // 2. AND it has tasks with deadlines before today that are not done
+  const hasOverdue = cellDateTimestamp >= todayStartTimestamp &&
+                     tasks.some(t => t.deadline && t.deadline < todayStartTimestamp && t.status !== 'done');
+
+  // Determine border style (priority: overdue > today > normal)
+  let borderClass = 'border border-neutral-light/40';
+  if (hasOverdue) {
+    borderClass = 'border-2 border-red-400';
+  } else if (isToday) {
+    borderClass = 'border-2 border-primary shadow-md';
+  }
 
   return (
     <>
       <button
         onClick={() => tasks.length > 0 && setShowDrawer(true)}
-        className={`aspect-square p-2 rounded-xl transition-all duration-200 flex flex-col
+        className={`aspect-square p-2 rounded-xl transition-all duration-200 flex flex-col ${borderClass}
                    ${isCurrentMonth ? 'bg-white' : 'bg-neutral-light/20'}
-                   ${isToday ? 'ring-2 ring-primary shadow-md' : 'border border-neutral-light/40'}
                    ${tasks.length > 0 ? 'hover:shadow-lg hover:scale-105 cursor-pointer' : 'cursor-default'}
-                   ${hasOverdue ? 'ring-2 ring-red-400' : ''}
                  `}
       >
         {/* Date number */}

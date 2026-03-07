@@ -834,6 +834,14 @@ impl Database {
         Ok(())
     }
 
+    /// Delete a setting by key
+    pub fn delete_setting(&self, key: &str) -> Result<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute("DELETE FROM settings WHERE key = ?1", [key])
+            .context("Failed to delete setting")?;
+        Ok(())
+    }
+
     /// Get multiple settings by prefix
     pub fn get_settings_by_prefix(&self, prefix: &str) -> Result<Vec<(String, String)>> {
         let conn = self.conn.lock().unwrap();

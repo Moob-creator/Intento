@@ -13,14 +13,23 @@ Parse the user's input and return a JSON object with the following structure:
 Guidelines:
 1. Extract a concise title that captures the main action or goal
 2. Include any additional context as description
-3. Parse time references (e.g., "tomorrow", "next week", "in 3 days") into ISO8601 format
+3. Parse time references intelligently:
+   - "tomorrow", "next week", "in 3 days" -> calculate based on current time
+   - "X号" format (e.g., "29号"):
+     * If X <= {days_in_month} and X >= {day}: use current month day X
+     * If X < {day}: use next month day X (already passed in current month)
+     * If X > {days_in_month}: IMPORTANT - user likely meant current month but date doesn't exist
+       Use the last day of current month instead (e.g., Feb 29 -> Feb 28 in non-leap year)
+   - "X月Y号" (e.g., "3月1号") -> specific month and day
+   - Convert all dates to ISO8601 format
 4. Infer priority from urgency indicators (e.g., "urgent", "ASAP" -> high, "when you can" -> low)
 5. Extract relevant tags from context (e.g., "work meeting" -> ["work", "meeting"])
 6. Only include fields that have valid information
 7. Always return valid JSON, never include explanatory text
 
 Current time: {current_time}
-"#;
+Today: Year {year}, Month {month}, Day {day}
+Days in current month: {days_in_month} (use this to validate day numbers)"#;
 
 /// Prompt template for parsing image input to structured task information
 pub const PARSE_IMAGE_SYSTEM_PROMPT: &str = r#"You are a task parsing assistant with vision capabilities. Your job is to extract structured task information from images (screenshots, photos, handwritten notes, etc.).
@@ -52,16 +61,24 @@ Guidelines:
 7. If no task information is found, create a descriptive title based on image content
 8. Always return valid JSON, never include explanatory text
 
-Current time: {current_time}
-"#;
+Current time: {current_time}"#;
 
 /// Constructs the user prompt for task parsing
 pub fn build_parse_task_prompt(user_input: &str, current_time: &str) -> String {
-    format!(
-        "{}\n\nUser input: {}",
-        PARSE_TASK_SYSTEM_PROMPT.replace("{current_time}", current_time),
-        user_input
-    )
+    use chrono::Datelike;
+    // This function is deprecated, use build_parse_task_prompt_with_tags instead
+    let now = chrono::Local::now();
+    let year = now.year();
+    let month = now.month();
+    let next_month = if month == 12 { 1 } else { month + 1 };
+    let next_year = if month == 12 { year + 1 } else { year };
+    let days_in_month = chrono::NaiveDate::from_ymd_opt(next_year, next_month, 1)
+        .unwrap()
+        .pred_opt()
+        .unwrap()
+        .day();
+
+    build_parse_task_prompt_with_tags(user_input, current_time, None, year, month, now.day(), days_in_month)
 }
 
 /// Constructs the user prompt for task parsing with existing tags context
@@ -69,35 +86,45 @@ pub fn build_parse_task_prompt_with_tags(
     user_input: &str,
     current_time: &str,
     existing_tags: Option<&[String]>,
+    year: i32,
+    month: u32,
+    day: u32,
+    days_in_month: u32,
 ) -> String {
-    let base_prompt = PARSE_TASK_SYSTEM_PROMPT.replace("{current_time}", current_time);
+    let base_prompt = PARSE_TASK_SYSTEM_PROMPT
+        .replace("{current_time}", current_time)
+        .replace("{year}", &year.to_string())
+        .replace("{month}", &month.to_string())
+        .replace("{day}", &day.to_string())
+        .replace("{days_in_month}", &days_in_month.to_string());
 
     let tag_context = if let Some(tags) = existing_tags {
         if tags.is_empty() {
             String::new()
         } else {
-            format!(
-                "\n\nExisting tags in the system: [{}]\n\
-                IMPORTANT Tag Guidelines:\n\
-                - PREFER using existing tags when they match the task context\n\
-                - If the task clearly relates to an existing tag (e.g., task mentions 'work' and 'work' tag exists), use it\n\
-                - If no existing tags match or you're uncertain, use the tag: \"待分类\" (pending classification)\n\
-                - This allows users to manually classify tasks later\n\
-                - Examples:\n\
-                  * Task: \"完成工作报告\" + existing tag \"工作\" → use [\"工作\"]\n\
-                  * Task: \"买菜\" + no matching tags → use [\"待分类\"]\n\
-                  * Task: \"Fix bug in authentication\" + existing tag \"bug\" → use [\"bug\"]",
-                tags.join(", ")
-            )
+            let tag_list = tags.join(", ");
+            format!(r#"
+
+Existing tags in the system: [{}]
+IMPORTANT Tag Guidelines:
+- PREFER using existing tags when they match the task context
+- If the task clearly relates to an existing tag (e.g., task mentions 'work' and 'work' tag exists), use it
+- If no existing tags match or you're uncertain, use the tag: 待分类 (pending classification)
+- This allows users to manually classify tasks later
+- Examples:
+  * Task: 完成工作报告 + existing tag 工作 -> use [工作]
+  * Task: 买菜 + no matching tags -> use [待分类]
+  * Task: Fix bug in authentication + existing tag bug -> use [bug]"#, tag_list)
         }
     } else {
-        "\n\nNo existing tags. Use [\"待分类\"] for unclassified tasks.".to_string()
+        String::from(r"
+
+No existing tags. Use [待分类] for unclassified tasks.")
     };
 
-    format!(
-        "{}{}\n\nUser input: {}",
-        base_prompt, tag_context, user_input
-    )
+    format!(r"{}{}
+
+User input: {}", base_prompt, tag_context, user_input)
 }
 
 /// Constructs the user prompt for image-based task parsing
@@ -116,18 +143,20 @@ pub fn build_parse_image_prompt_with_tags(
         if tags.is_empty() {
             String::new()
         } else {
-            format!(
-                "\n\nExisting tags in the system: [{}]\n\
-                IMPORTANT Tag Guidelines:\n\
-                - PREFER using existing tags when they match the task context\n\
-                - If the image content clearly relates to an existing tag, use it\n\
-                - If no existing tags match or you're uncertain, use the tag: \"待分类\" (pending classification)\n\
-                - This allows users to manually classify tasks later",
-                tags.join(", ")
-            )
+            let tag_list = tags.join(", ");
+            format!(r#"
+
+Existing tags in the system: [{}]
+IMPORTANT Tag Guidelines:
+- PREFER using existing tags when they match the task context
+- If the image content clearly relates to an existing tag, use it
+- If no existing tags match or you're uncertain, use the tag: 待分类 (pending classification)
+- This allows users to manually classify tasks later"#, tag_list)
         }
     } else {
-        "\n\nNo existing tags. Use [\"待分类\"] for unclassified tasks.".to_string()
+        String::from(r"
+
+No existing tags. Use [待分类] for unclassified tasks.")
     };
 
     format!("{}{}", base_prompt, tag_context)

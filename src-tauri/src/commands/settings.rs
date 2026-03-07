@@ -3,6 +3,118 @@ use tauri::State;
 
 use crate::db::Database;
 
+/// API Keys settings structure
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ApiKeysSettings {
+    pub base_url: Option<String>,
+    pub api_key: Option<String>,
+}
+
+impl Default for ApiKeysSettings {
+    fn default() -> Self {
+        Self {
+            base_url: Some("https://api.openai.com/v1".to_string()),
+            api_key: None,
+        }
+    }
+}
+
+/// Get API keys from database or environment
+#[tauri::command]
+pub fn get_api_keys(db: State<'_, Database>) -> Result<ApiKeysSettings, String> {
+    let mut result = ApiKeysSettings::default();
+
+    // Try to get from database first
+    if let Ok(Some(url)) = db.inner().get_setting("api_base_url") {
+        result.base_url = Some(url);
+    } else if let Ok(url) = std::env::var("API_BASE_URL") {
+        result.base_url = Some(url);
+    }
+
+    if let Ok(Some(key)) = db.inner().get_setting("api_key") {
+        result.api_key = Some(key);
+    } else if let Ok(key) = std::env::var("API_KEY") {
+        result.api_key = Some(key);
+    }
+
+    Ok(result)
+}
+
+/// Update API keys in database
+#[tauri::command]
+pub fn update_api_keys(
+    db: State<'_, Database>,
+    base_url: Option<String>,
+    api_key: Option<String>,
+) -> Result<(), String> {
+    // Update base URL
+    let updated_url = if let Some(url) = base_url {
+        if url.is_empty() {
+            db.inner().delete_setting("api_base_url")
+                .map_err(|e| format!("Failed to delete base URL: {}", e))?;
+            None
+        } else {
+            db.inner().set_setting("api_base_url", &url)
+                .map_err(|e| format!("Failed to save base URL: {}", e))?;
+            Some(url.clone())
+        }
+    } else {
+        db.inner().get_setting("api_base_url").ok().flatten()
+    };
+
+    // Update API key
+    let updated_key = if let Some(key) = api_key {
+        if key.is_empty() {
+            db.inner().delete_setting("api_key")
+                .map_err(|e| format!("Failed to delete API key: {}", e))?;
+            None
+        } else {
+            db.inner().set_setting("api_key", &key)
+                .map_err(|e| format!("Failed to save API key: {}", e))?;
+            Some(key.clone())
+        }
+    } else {
+        db.inner().get_setting("api_key").ok().flatten()
+    };
+
+    // ✨ Re-apply all environment variables after any update
+    // Get current values from database for complete configuration
+    let current_url = updated_url.or_else(|| db.inner().get_setting("api_base_url").ok().flatten());
+    let current_key = updated_key.or_else(|| db.inner().get_setting("api_key").ok().flatten());
+
+    if let (Some(url), Some(key)) = (current_url, current_key) {
+        std::env::set_var("API_BASE_URL", &url);
+        std::env::set_var("API_KEY", &key);
+
+        // Detect provider and set specific env vars
+        let url_lower = url.to_lowercase();
+        if url_lower.contains("openai.com") || url_lower.contains("azure.com") {
+            std::env::set_var("OPENAI_BASE_URL", &url);
+            std::env::set_var("OPENAI_API_KEY", &key);
+            std::env::set_var("AI_PROVIDER", "openai");
+            println!("✅ Updated API configuration: OpenAI");
+        } else if url_lower.contains("anthropic.com") {
+            std::env::set_var("ANTHROPIC_BASE_URL", &url);
+            std::env::set_var("ANTHROPIC_API_KEY", &key);
+            std::env::set_var("AI_PROVIDER", "anthropic");
+            println!("✅ Updated API configuration: Anthropic");
+        } else if url_lower.contains("moonshot.cn") {
+            std::env::set_var("MOONSHOT_BASE_URL", &url);
+            std::env::set_var("MOONSHOT_API_KEY", &key);
+            std::env::set_var("AI_PROVIDER", "kimi");
+            println!("✅ Updated API configuration: Moonshot/Kimi");
+        } else {
+            // Default to OpenAI-compatible for custom URLs
+            std::env::set_var("OPENAI_BASE_URL", &url);
+            std::env::set_var("OPENAI_API_KEY", &key);
+            std::env::set_var("AI_PROVIDER", "openai");
+            println!("✅ Updated API configuration: OpenAI-compatible");
+        }
+    }
+
+    Ok(())
+}
+
 /// Auto summary settings structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AutoSummarySettings {

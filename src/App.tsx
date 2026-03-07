@@ -788,7 +788,7 @@ function App() {
   };
 
   return (
-    <div className="relative flex flex-col h-screen w-full bg-background overflow-hidden">
+    <div className="relative flex flex-col h-screen w-full bg-background overflow-hidden select-none">
       {/* Top bar */}
       <TopBar
         onSearchClick={() => setCommandPaletteOpen(true)}
@@ -1050,7 +1050,7 @@ function App() {
                     rows={pastedImage ? 3 : 5}
                     autoFocus
                     disabled={isParsing}
-                    className="flex-1 px-5 py-4 rounded-2xl bg-amber-50/50 text-neutral-dark
+                    className="flex-1 px-5 py-4 rounded-2xl bg-amber-50/50 text-neutral-dark select-text
                              placeholder:text-neutral-dark/40 placeholder:select-text border-2 border-amber-100 resize-none
                              focus:outline-none focus:border-amber-400/50 focus:bg-amber-50/80
                              transition-all duration-200 text-base leading-relaxed"

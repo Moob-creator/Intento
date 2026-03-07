@@ -160,11 +160,32 @@ impl AiClient {
         text: &str,
         existing_tags: Option<&[String]>,
     ) -> Result<ParsedTask> {
-        // Get current time in ISO8601 format
-        let current_time = chrono::Utc::now().to_rfc3339();
+        use chrono::Datelike;
+        // Get current time and date context
+        let now = chrono::Local::now();
+        let current_time = now.to_rfc3339();
 
-        // Build the prompt with tags context
-        let prompt = prompts::build_parse_task_prompt_with_tags(text, &current_time, existing_tags);
+        // Calculate days in current month
+        let year = now.year();
+        let month = now.month();
+        let next_month = if month == 12 { 1 } else { month + 1 };
+        let next_year = if month == 12 { year + 1 } else { year };
+        let days_in_month = chrono::NaiveDate::from_ymd_opt(next_year, next_month, 1)
+            .unwrap()
+            .pred_opt()
+            .unwrap()
+            .day();
+
+        // Build the prompt with tags context and date info
+        let prompt = prompts::build_parse_task_prompt_with_tags(
+            text,
+            &current_time,
+            existing_tags,
+            year,
+            month,
+            now.day(),
+            days_in_month,
+        );
 
         // Create LLM request
         let content = Content::new("user").with_text(prompt);

@@ -54,6 +54,8 @@ fn main() {
             commands::settings::update_auto_summary_settings,
             commands::settings::get_notification_settings,
             commands::settings::update_notification_settings,
+            commands::settings::get_api_keys,
+            commands::settings::update_api_keys,
         ])
         .setup(|app| {
             // ✨ 设置 macOS 交通灯位置
@@ -61,16 +63,80 @@ fn main() {
                 window::setup_traffic_light_position(&main_window);
             }
 
-            // Initialize database
-            let app_data_dir = app
+            // Initialize database with environment-specific directory
+            // Debug and Release use different app identifiers for complete isolation
+            #[cfg(debug_assertions)]
+            let app_identifier = "com.intento.app.debug";
+            #[cfg(not(debug_assertions))]
+            let app_identifier = "com.intento.app";
+
+            // Get base data directory and append our custom identifier
+            let base_data_dir = app
                 .path()
                 .app_data_dir()
                 .expect("Failed to get app data directory");
+
+            // Replace the default identifier path with our custom one
+            let app_data_dir = base_data_dir
+                .parent()
+                .expect("Failed to get parent directory")
+                .join(app_identifier);
+
             std::fs::create_dir_all(&app_data_dir)
                 .expect("Failed to create app data directory");
 
             let db_path = app_data_dir.join("intento.db");
+            println!("📦 App identifier: {}", app_identifier);
+            println!("📦 App data directory: {:?}", app_data_dir);
+            println!("📦 Database path: {:?}", db_path);
+
             let database = db::Database::new(db_path).expect("Failed to initialize database");
+
+            // ✨ Load API keys from database and set environment variables
+            // Priority: Database settings > .env file
+            let (api_base_url, api_key) = (
+                database.get_setting("api_base_url").ok().flatten(),
+                database.get_setting("api_key").ok().flatten(),
+            );
+
+            if let (Some(url), Some(key)) = (&api_base_url, &api_key) {
+                println!("✅ Loaded API configuration from database");
+                println!("   Base URL: {}", url);
+                println!("   API Key: {}****", &key[..key.len().saturating_sub(4).max(4)]);
+
+                // Set generic API variables
+                std::env::set_var("API_BASE_URL", url);
+                std::env::set_var("API_KEY", key);
+
+                // Detect provider and set specific env vars
+                let url_lower = url.to_lowercase();
+                if url_lower.contains("openai.com") || url_lower.contains("azure.com") {
+                    std::env::set_var("OPENAI_BASE_URL", url);
+                    std::env::set_var("OPENAI_API_KEY", key);
+                    std::env::set_var("AI_PROVIDER", "openai");
+                    println!("   Provider: OpenAI");
+                } else if url_lower.contains("anthropic.com") {
+                    std::env::set_var("ANTHROPIC_BASE_URL", url);
+                    std::env::set_var("ANTHROPIC_API_KEY", key);
+                    std::env::set_var("AI_PROVIDER", "anthropic");
+                    println!("   Provider: Anthropic");
+                } else if url_lower.contains("moonshot.cn") {
+                    std::env::set_var("MOONSHOT_BASE_URL", url);
+                    std::env::set_var("MOONSHOT_API_KEY", key);
+                    std::env::set_var("AI_PROVIDER", "kimi");
+                    println!("   Provider: Moonshot/Kimi");
+                } else {
+                    // For custom or unknown URLs, try to infer from known patterns
+                    // Default to treating as OpenAI-compatible
+                    std::env::set_var("OPENAI_BASE_URL", url);
+                    std::env::set_var("OPENAI_API_KEY", key);
+                    std::env::set_var("AI_PROVIDER", "openai");
+                    println!("   Provider: OpenAI-compatible (default)");
+                }
+            } else {
+                println!("ℹ️  No API configuration found in database, using .env file settings");
+                // .env is already loaded by dotenv at the top
+            }
 
             // Database is Clone, so we can manage it directly
             app.manage(database.clone());

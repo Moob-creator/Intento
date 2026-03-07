@@ -1,0 +1,242 @@
+[
+  {
+    "case_id": "001",
+    "input": "今天要买牛奶",
+    "expected_create": true,
+    "actual_create": true,
+    "intent_match": true,
+    "parse_accuracy": 1.0,
+    "reasoning": "有明确行动和时间",
+    "error": null
+  },
+  {
+    "case_id": "002",
+    "input": "今天天气怎么样",
+    "expected_create": false,
+    "actual_create": false,
+    "intent_match": true,
+    "parse_accuracy": null,
+    "reasoning": "纯粹询问天气情况",
+    "error": null
+  },
+  {
+    "case_id": "003",
+    "input": "帮我分析一下这个项目的架构",
+    "expected_create": false,
+    "actual_create": false,
+    "intent_match": true,
+    "parse_accuracy": null,
+    "reasoning": "属知识咨询，非待办",
+    "error": null
+  },
+  {
+    "case_id": "004",
+    "input": "下午3点开会，准备会议资料",
+    "expected_create": true,
+    "actual_create": true,
+    "intent_match": true,
+    "parse_accuracy": 0.5,
+    "reasoning": "明确时间与行动，需备忘",
+    "error": null
+  },
+  {
+    "case_id": "005",
+    "input": "给我讲个笑话",
+    "expected_create": false,
+    "actual_create": false,
+    "intent_match": true,
+    "parse_accuracy": null,
+    "reasoning": "娱乐请求，非待办事项",
+    "error": null
+  },
+  {
+    "case_id": "006",
+    "input": "明天是周六吗",
+    "expected_create": false,
+    "actual_create": false,
+    "intent_match": true,
+    "parse_accuracy": null,
+    "reasoning": "单纯查询日期",
+    "error": null
+  },
+  {
+    "case_id": "007",
+    "input": "截止日期是下周三的报告需要完成",
+    "expected_create": true,
+    "actual_create": true,
+    "intent_match": true,
+    "parse_accuracy": 1.0,
+    "reasoning": "有明确行动和时间",
+    "error": null
+  },
+  {
+    "case_id": "008",
+    "input": "计算123+456的结果",
+    "expected_create": false,
+    "actual_create": false,
+    "intent_match": true,
+    "parse_accuracy": null,
+    "reasoning": "纯计算请求，无行动意图",
+    "error": null
+  },
+  {
+    "case_id": "009",
+    "input": "下午2点给客户打电话",
+    "expected_create": true,
+    "actual_create": true,
+    "intent_match": true,
+    "parse_accuracy": 1.0,
+    "reasoning": "有时间+具体行动",
+    "error": null
+  },
+  {
+    "case_id": "010",
+    "input": "提醒我明天晚上9点给家里打电话",
+    "expected_create": true,
+    "actual_create": true,
+    "intent_match": true,
+    "parse_accuracy": 0.5,
+    "reasoning": "含提醒、时间与具体行动",
+    "error": null
+  },
+  {
+    "case_id": "011",
+    "input": "帮我记下来下周要提交报告",
+    "expected_create": true,
+    "actual_create": true,
+    "intent_match": true,
+    "parse_accuracy": 0.5,
+    "reasoning": "含记录需求与时间行动",
+    "error": null
+  },
+  {
+    "case_id": "012",
+    "input": "帮我安排一下明天的会议",
+    "expected_create": true,
+    "actual_create": true,
+    "intent_match": true,
+    "parse_accuracy": 1.0,
+    "reasoning": "含行动与时间安排",
+    "error": null
+  },
+  {
+    "case_id": "013",
+    "input": "把这个想法记下来：可能需要优化代码",
+    "expected_create": true,
+    "actual_create": true,
+    "intent_match": true,
+    "parse_accuracy": 1.0,
+    "reasoning": "明确要求记录待办",
+    "error": null
+  },
+  {
+    "case_id": "014",
+    "input": "只是问问，不用记录任务",
+    "expected_create": false,
+    "actual_create": false,
+    "intent_match": true,
+    "parse_accuracy": null,
+    "reasoning": "明确表示不用记录",
+    "error": null
+  },
+  {
+    "case_id": "015",
+    "input": "取消今天下午的任务",
+    "expected_create": false,
+    "actual_create": false,
+    "intent_match": true,
+    "parse_accuracy": null,
+    "reasoning": "操作指令，非新增任务",
+    "error": null
+  },
+  {
+    "case_id": "016",
+    "input": "不要创建这个任务",
+    "expected_create": false,
+    "actual_create": false,
+    "intent_match": true,
+    "parse_accuracy": null,
+    "reasoning": "明确取消指令",
+    "error": null
+  },
+  {
+    "case_id": "017",
+    "input": "紧急处理客户的投诉",
+    "expected_create": true,
+    "actual_create": true,
+    "intent_match": true,
+    "parse_accuracy": 1.0,
+    "reasoning": "含行动指令“处理”",
+    "error": null
+  },
+  {
+    "case_id": "018",
+    "input": "今天工作很辛苦",
+    "expected_create": false,
+    "actual_create": false,
+    "intent_match": true,
+    "parse_accuracy": null,
+    "reasoning": "仅是感慨，无行动需求",
+    "error": null
+  },
+  {
+    "case_id": "019",
+    "input": "写一封给老板的邮件",
+    "expected_create": false,
+    "actual_create": false,
+    "intent_match": true,
+    "parse_accuracy": null,
+    "reasoning": "内容生成请求",
+    "error": null
+  },
+  {
+    "case_id": "020",
+    "input": "这个功能还需要实现吗？",
+    "expected_create": false,
+    "actual_create": false,
+    "intent_match": true,
+    "parse_accuracy": null,
+    "reasoning": "属于询问而非任务指令",
+    "error": null
+  },
+  {
+    "case_id": "021",
+    "input": "可能需要处理这个问题",
+    "expected_create": true,
+    "actual_create": true,
+    "intent_match": true,
+    "parse_accuracy": 1.0,
+    "reasoning": "有行动意向并含时间模糊词",
+    "error": null
+  },
+  {
+    "case_id": "022",
+    "input": "考虑一下是否要做这个项目",
+    "expected_create": false,
+    "actual_create": true,
+    "intent_match": false,
+    "parse_accuracy": 1.0,
+    "reasoning": "含行动动词\"考虑\"",
+    "error": null
+  },
+  {
+    "case_id": "023",
+    "input": "记得明天买菜",
+    "expected_create": true,
+    "actual_create": true,
+    "intent_match": true,
+    "parse_accuracy": 1.0,
+    "reasoning": "含提醒词和时间行动",
+    "error": null
+  },
+  {
+    "case_id": "024",
+    "input": "能不能帮我打印这份文件？",
+    "expected_create": false,
+    "actual_create": true,
+    "intent_match": false,
+    "parse_accuracy": 1.0,
+    "reasoning": "请求帮忙打印文件",
+    "error": null
+  }
+]

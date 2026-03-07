@@ -2,6 +2,23 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🚨 重要约束
+
+### 文档创建规则
+**IMPORTANT**: 除非用户明确要求"输出到文档"、"写入文档"或"创建文档"，否则：
+- ❌ 不要主动创建新的 Markdown 文档
+- ❌ 不要生成报告、总结、指南等文档文件
+- ✅ 直接在对话中提供答案和信息
+- ✅ 只在用户明确请求时才创建文档
+
+**例外情况**（可以创建文档）：
+1. 用户明确说"写到文档里"、"保存到文件"
+2. 创建测试文件（`.test.ts`, `.test.tsx`, `.spec.ts`）
+3. 创建配置文件（`.config.ts`, `.yaml`, `.json`）
+4. 创建代码文件（`.ts`, `.tsx`, `.rs` 等）
+
+**原因**: 项目中文档已经很多，避免文档泛滥。
+
 ## Project Overview
 
 **Intento (无忧记)** is an intelligent todo list desktop application that uses AI to parse natural language and image inputs into structured tasks, and automatically generates daily/weekly/monthly summaries.
@@ -44,6 +61,11 @@ cargo clippy             # Lint Rust code
   - `models.rs` - Data models (Task, Summary, ContextCache, etc.)
   - Connection is thread-safe via `Arc<Mutex<Connection>>`
   - Uses `PRAGMA user_version` for migration tracking
+  - **Bundle ID separation**:
+    - Debug mode: `com.intento.app.debug` → `~/Library/Application Support/com.intento.app.debug/intento.db`
+    - Release mode: `com.intento.app` → `~/Library/Application Support/com.intento.app/intento.db`
+    - Complete isolation: different Bundle IDs = truly separate apps
+    - Can run both versions simultaneously without conflicts
 
 - `ai/` - AI integration using ADK-Rust
   - `client.rs` - OpenAI/Claude API client wrapper
@@ -215,6 +237,25 @@ Use `commands::ai::ai_health_check()` to verify API connectivity without consumi
 ### Windows
 - Use `--target x86_64-pc-windows-msvc` for builds
 - Notification permissions handled by Tauri automatically
+
+## 项目目录规范（2026-02-25 整理）
+
+### 根目录只保留
+- `CLAUDE.md`、`readme.md` 以及项目配置文件（package.json / vite.config.ts / tailwind.config.js / tsconfig.json / .env 等）
+- **禁止在根目录放脚本和 MD 文档**
+
+### Shell 脚本 → `tools/scripts/`
+| 文件 | 用途 |
+|------|------|
+| `build_mac.sh` | 打 macOS DMG 安装包（universal binary），完成后打印 DMG 路径 |
+| `open_release.sh` | 打开上次构建的 release bundle 目录 |
+| `run_intent_test.sh` | 意图识别 AI 测试 |
+| `test_db_separation.sh` | 验证 debug/release 数据库隔离 |
+| `test.sh` | 通用测试 runner |
+
+> 新增脚本一律放 `tools/scripts/`，不要放根目录。
+
+---
 
 ## Documentation Organization
 
